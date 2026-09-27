@@ -81,7 +81,7 @@ export async function login(formData: FormData) {
   if (user.role === "MEDECIN_CHEF") {
     redirect("/");
   } else {
-    redirect("/depart-matin");
+    redirect("/cabine");
   }
 }
 
@@ -93,7 +93,7 @@ export async function logout() {
 
 /**
  * Créer un nouvel utilisateur.
- * Accepte le rôle (MEDECIN_CHEF ou INFIRMIER) et l'email (optionnel) via le formulaire.
+ * Accepte le rôle (MEDECIN_CHEF ou ESTHETICIENNE) et l'email (optionnel) via le formulaire.
  * Seuls les MEDECIN_CHEF peuvent créer des utilisateurs.
  */
 export async function createUser(formData: FormData) {
@@ -105,12 +105,12 @@ export async function createUser(formData: FormData) {
 
   const username = (formData.get("username") as string).toLowerCase().trim();
   const password = formData.get("password") as string;
-  const role = (formData.get("role") as string) || "INFIRMIER";
+  const role = (formData.get("role") as string) || "ESTHETICIENNE";
   const email = (formData.get("email") as string)?.trim() || null;
 
   if (!username || !password)
     return { error: "Veuillez remplir l'identifiant et le mot de passe." };
-  if (role !== "MEDECIN_CHEF" && role !== "INFIRMIER")
+  if (role !== "MEDECIN_CHEF" && role !== "ESTHETICIENNE")
     return { error: "Rôle invalide." };
 
   const exists = await (prisma as any).user.findUnique({ where: { username } });

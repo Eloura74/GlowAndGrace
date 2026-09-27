@@ -3,14 +3,14 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
-export async function getArticles() {
-  return prisma.article.findMany({
+export async function getProduits() {
+  return prisma.produit.findMany({
     include: { mouvements: true },
     orderBy: { reference: 'asc' }
   })
 }
 
-export async function createArticle(formData: FormData) {
+export async function createProduit(formData: FormData) {
   const reference = formData.get("reference") as string
   const designation = formData.get("designation") as string
   const categorie = formData.get("categorie") as string
@@ -24,7 +24,7 @@ export async function createArticle(formData: FormData) {
   const fournisseur = (formData.get("fournisseur") as string)?.trim() || null
   const codeBarre = (formData.get("codeBarre") as string)?.trim() || null
 
-  await prisma.article.create({
+  await prisma.produit.create({
     data: {
       reference,
       designation,
@@ -46,8 +46,8 @@ export async function createArticle(formData: FormData) {
   revalidatePath("/reassort")
 }
 
-export async function deleteArticle(id: string) {
-  await prisma.article.delete({
+export async function deleteProduit(id: string) {
+  await prisma.produit.delete({
     where: { id }
   })
   revalidatePath("/catalogue")
@@ -55,7 +55,7 @@ export async function deleteArticle(id: string) {
   revalidatePath("/reassort")
 }
 
-export async function updateArticle(formData: FormData) {
+export async function updateProduit(formData: FormData) {
   const id = formData.get("id") as string
   const reference = formData.get("reference") as string
   const designation = formData.get("designation") as string
@@ -69,7 +69,7 @@ export async function updateArticle(formData: FormData) {
   const codeBarre = (formData.get("codeBarre") as string)?.trim() || null
 
   if (id) {
-    await prisma.article.update({
+    await prisma.produit.update({
       where: { id },
       data: {
         reference,
@@ -92,7 +92,7 @@ export async function updateArticle(formData: FormData) {
   }
 }
 
-export async function creerArticleEtStock(formData: FormData) {
+export async function creerProduitEtStock(formData: FormData) {
   const reference = formData.get("reference") as string
   const designation = formData.get("designation") as string
   const fournisseur = (formData.get("fournisseur") as string)?.trim() || null
@@ -100,7 +100,7 @@ export async function creerArticleEtStock(formData: FormData) {
   const quantiteReelle = parseInt(formData.get("quantiteReelle") as string || "0")
   const observation = formData.get("observation") as string || "Création via Scan & Go"
 
-  const article = await prisma.article.create({
+  const produit = await prisma.produit.create({
     data: {
       reference: reference || `REF-${Date.now()}`,
       designation,
@@ -117,7 +117,7 @@ export async function creerArticleEtStock(formData: FormData) {
       data: {
         type: "Correction",
         quantite: quantiteReelle,
-        articleId: article.id,
+        produitId: produit.id,
         observation: observation,
         utilisateur: "Magasinier"
       }
@@ -127,7 +127,7 @@ export async function creerArticleEtStock(formData: FormData) {
   revalidatePath("/inventaire")
   revalidatePath("/catalogue")
   
-  return article.id
+  return produit.id
 }
 
 export async function updateInfosRapides(formData: FormData) {
@@ -137,7 +137,7 @@ export async function updateInfosRapides(formData: FormData) {
   const reference = (formData.get("reference") as string)?.trim() || null
 
   if (id) {
-    await prisma.article.update({
+    await prisma.produit.update({
       where: { id },
       data: {
         ...(designation ? { designation } : {}),

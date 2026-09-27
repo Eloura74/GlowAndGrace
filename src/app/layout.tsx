@@ -8,18 +8,18 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StockPro - Gestion de Patients",
-  description: "Gestion des stocks, pharmacies et patients",
+  title: "Glow&Grace - Gestion Esthétique",
+  description: "Gestion des clientes, soins et stocks",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "StockPro",
+    title: "Glow&Grace",
   },
 };
 
 export const viewport = {
-  themeColor: "#f8fafc",
+  themeColor: "#ffe4e6",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -31,7 +31,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getSession();
-  const showSidebar = session?.role === 'MEDECIN_CHEF' || session?.role === 'GERANT';
+  const showSidebar = !!session;
 
   return (
     <html lang="fr" suppressHydrationWarning>

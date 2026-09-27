@@ -6,18 +6,18 @@ import { revalidatePath } from "next/cache"
 export async function getMouvements() {
   return prisma.mouvement.findMany({
     include: {
-      article: true,
-      patient: true
+      produit: true,
+      client: true
     },
     orderBy: { date: 'desc' }
   })
 }
 
 export async function createMouvement(formData: FormData) {
-  const articleId = formData.get("articleId") as string
+  const produitId = formData.get("produitId") as string
   const type = formData.get("type") as string
   const quantite = parseInt(formData.get("quantite") as string)
-  const patientId = formData.get("patientId") as string || null
+  const clientId = formData.get("clientId") as string || null
   const utilisateur = formData.get("utilisateur") as string || "Anonyme"
   const observation = formData.get("observation") as string || ""
 
@@ -27,10 +27,10 @@ export async function createMouvement(formData: FormData) {
   
   await prisma.mouvement.create({
     data: {
-      articleId,
+      produitId,
       type,
       quantite,
-      patientId: patientId === "" ? null : patientId,
+      clientId: clientId === "" ? null : clientId,
       utilisateur,
       observation
     }
@@ -67,8 +67,8 @@ export async function annulerMouvement(id: string) {
     data: {
       type: typeInverse,
       quantite: mvt.quantite,
-      articleId: mvt.articleId,
-      patientId: mvt.patientId,
+      produitId: mvt.produitId,
+      clientId: mvt.clientId,
       utilisateur: "Système",
       observation: `Annulation du mouvement ${mvt.type} du ${mvt.date.toLocaleDateString("fr-FR")}`
     }
@@ -80,12 +80,12 @@ export async function annulerMouvement(id: string) {
   revalidatePath("/")
 }
 
-export async function entrerStock(articleId: string, quantite: number) {
+export async function entrerStock(produitId: string, quantite: number) {
   await prisma.mouvement.create({
     data: {
       type: "Achat",
       quantite,
-      articleId,
+      produitId,
       observation: "Mise à jour rapide du stock",
       utilisateur: "Système"
     }
@@ -96,25 +96,25 @@ export async function entrerStock(articleId: string, quantite: number) {
 }
 
 export async function entrerStockRapide(formData: FormData) {
-  const articleId = formData.get("articleId") as string
+  const produitId = formData.get("produitId") as string
   const quantite = parseInt(formData.get("quantite") as string || "1")
   
-  if (articleId && quantite > 0) {
-    await entrerStock(articleId, quantite)
+  if (produitId && quantite > 0) {
+    await entrerStock(produitId, quantite)
   }
 }
 
 export async function corrigerStock(formData: FormData) {
-  const articleId = formData.get("articleId") as string
+  const produitId = formData.get("produitId") as string
   const ecart = parseInt(formData.get("ecart") as string)
   const observation = formData.get("observation") as string || "Inventaire : Ajustement automatique"
   
-  if (articleId && ecart !== 0 && !isNaN(ecart)) {
+  if (produitId && ecart !== 0 && !isNaN(ecart)) {
     await prisma.mouvement.create({
       data: {
         type: "Correction",
         quantite: ecart, // Can be positive or negative
-        articleId,
+        produitId,
         observation: observation,
         utilisateur: "Système"
       }

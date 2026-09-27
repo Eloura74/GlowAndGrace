@@ -2,17 +2,17 @@
 
 import { useState } from "react"
 import { Plus, Minus, Search, ScanBarcode, Box, HeartPulse, CheckCircle2, RotateCcw, Trash2 } from "lucide-react"
-import { validerDepartMatin } from "@/app/actions/depart"
-import { validerRetourPatient } from "@/app/actions/retour"
+import { validerCabine } from "@/app/actions/depart"
+import { validerRetourClient } from "@/app/actions/retour"
 import { BarcodeScanner } from "@/components/BarcodeScanner"
 
-type Article = { id: string, designation: string, reference: string, codeBarre: string | null, stockActuel: number, stockMinimum: number }
-type Patient = { id: string, nom: string }
+type Produit = { id: string, designation: string, reference: string, codeBarre: string | null, stockActuel: number, stockMinimum: number }
+type Client = { id: string, nom: string }
 
-export function DepartMatinClient({ patients, articles, username }: { patients: Patient[], articles: Article[], username: string }) {
-  const [patientId, setPatientId] = useState<string>("")
+export function CabineClient({ clients, produits, username }: { clients: Client[], produits: Produit[], username: string }) {
+  const [clientId, setClientId] = useState<string>("")
   const [search, setSearch] = useState("")
-  const [panier, setPanier] = useState<{article: Article, quantite: number}[]>([])
+  const [panier, setPanier] = useState<{produit: Produit, quantite: number}[]>([])
   const [observation, setObservation] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -20,29 +20,29 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
   const [mode, setMode] = useState<"DEPART" | "VERIF" | "RETOUR">("DEPART")
   const [lastAdded, setLastAdded] = useState<string | null>(null)
 
-  const [patientSearchQuery, setPatientSearchQuery] = useState("")
-  const [showPatientDropdown, setShowPatientDropdown] = useState(false)
+  const [clientSearchQuery, setClientSearchQuery] = useState("")
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
 
-  const filteredArticles = articles.filter(a => 
+  const filteredProduits = produits.filter(a => 
     a.designation.toLowerCase().includes(search.toLowerCase()) || 
     a.reference.toLowerCase().includes(search.toLowerCase())
   ).slice(0, 5)
 
-  const addToPanier = (article: Article) => {
-    const existing = panier.find(p => p.article.id === article.id)
+  const addToPanier = (produit: Produit) => {
+    const existing = panier.find(p => p.produit.id === produit.id)
     if (existing) {
-      setPanier(panier.map(p => p.article.id === article.id ? { ...p, quantite: p.quantite + 1 } : p))
-      setLastAdded(`✅ ${article.designation} ajouté (x${existing.quantite + 1})`)
+      setPanier(panier.map(p => p.produit.id === produit.id ? { ...p, quantite: p.quantite + 1 } : p))
+      setLastAdded(`✅ ${produit.designation} ajouté (x${existing.quantite + 1})`)
     } else {
-      setPanier([...panier, { article, quantite: 1 }])
-      setLastAdded(`✅ ${article.designation} ajouté`)
+      setPanier([...panier, { produit, quantite: 1 }])
+      setLastAdded(`✅ ${produit.designation} ajouté`)
     }
     setSearch("")
     setTimeout(() => setLastAdded(null), 3000)
   }
 
   const handleScan = (decodedText: string) => {
-    const found = articles.find(a => a.codeBarre === decodedText || a.reference === decodedText)
+    const found = produits.find(a => a.codeBarre === decodedText || a.reference === decodedText)
     if (found) {
       if (mode === "DEPART" || mode === "RETOUR") {
         addToPanier(found)
@@ -55,37 +55,37 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
     }
   }
 
-  const remove = (id: string) => setPanier(panier.filter(p => p.article.id !== id))
+  const remove = (id: string) => setPanier(panier.filter(p => p.produit.id !== id))
   
   const updateQty = (id: string, qty: number) => {
     if (qty < 1) return
-    setPanier(panier.map(p => p.article.id === id ? { ...p, quantite: qty } : p))
+    setPanier(panier.map(p => p.produit.id === id ? { ...p, quantite: qty } : p))
   }
 
   const handleValider = async () => {
-    if (!patientId) return alert("Veuillez sélectionner un patient.")
+    if (!clientId) return alert("Veuillez sélectionner un client.")
     if (panier.length === 0) return alert("Votre liste est vide.")
     
     setIsSubmitting(true)
     try {
       const data = {
-        patientId,
+        clientId,
         username,
-        lignes: panier.map(item => ({ articleId: item.article.id, quantite: item.quantite })),
+        lignes: panier.map(item => ({ produitId: item.produit.id, quantite: item.quantite })),
         observation
       }
       
       let res;
       if (mode === "DEPART") {
-        res = await validerDepartMatin(data)
+        res = await validerCabine(data)
       } else {
-        res = await validerRetourPatient(data)
+        res = await validerRetourClient(data)
       }
 
       if (res.success) {
         setSuccess(true)
         setPanier([])
-        setPatientId("")
+        setClientId("")
         setObservation("")
         setTimeout(() => setSuccess(false), 5000)
       } else {
@@ -102,7 +102,7 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
       <div className="bg-white p-4 rounded-xl border shadow-sm">
         <BarcodeScanner onScan={handleScan} onClose={() => setIsScanning(false)} />
         <div className="mt-4 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm text-center">
-          Scannez le code-barres de l'article pour l'ajouter automatiquement au panier.
+          Scannez le code-barres de l'produit pour l'ajouter automatiquement au panier.
         </div>
       </div>
     )
@@ -143,7 +143,7 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
       {success && (mode === "DEPART" || mode === "RETOUR") && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-2xl flex items-center gap-3 font-medium shadow-lg animate-in slide-in-from-top-4 fade-in duration-300">
           <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-400" /> 
-          Tout est enregistré ! Bon courage sur le patient {username} !
+          Tout est enregistré ! Bon courage sur le client {username} !
         </div>
       )}
 
@@ -167,7 +167,7 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
             </div>
             <input
               type="text"
-              placeholder="Ex: câble, disjoncteur..."
+              placeholder="Ex: sérum, coton..."
               className="block w-full pl-12 rounded-2xl border-0 ring-1 ring-inset ring-slate-200 dark:ring-white/10 p-4 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:focus:ring-indigo-500 text-lg transition-all"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -176,10 +176,10 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
 
           {search && (
             <div className="mt-4 space-y-3">
-              {filteredArticles.length === 0 ? (
+              {filteredProduits.length === 0 ? (
                 <div className="p-4 text-slate-500 dark:text-zinc-500 text-center font-medium bg-slate-50 dark:bg-zinc-950/50 rounded-2xl ring-1 ring-slate-100 dark:ring-white/5">Aucun produit trouvé en stock.</div>
               ) : (
-                filteredArticles.map(a => (
+                filteredProduits.map(a => (
                   <div key={a.id} className="p-4 bg-white dark:bg-zinc-800 border border-slate-100 dark:border-white/5 shadow-sm rounded-2xl flex justify-between items-center">
                     <div>
                       <div className="font-semibold text-slate-900 dark:text-white text-lg">{a.designation}</div>
@@ -200,65 +200,65 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
         </div>
       )}
 
-      {/* 1. Choix du Patient */}
+      {/* 1. Choix du Client */}
       {(mode === "DEPART" || mode === "RETOUR") && (
         <>
           <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm dark:shadow-xl space-y-4">
         <h2 className="font-semibold text-slate-900 dark:text-white text-lg flex items-center gap-2">
           {mode === "DEPART" ? <HeartPulse className="w-5 h-5 text-indigo-500 dark:text-indigo-400"/> : <RotateCcw className="w-5 h-5 text-emerald-500 dark:text-emerald-400"/>} 
-          1. {mode === "DEPART" ? "Pour quel patient ?" : "De quel patient viens-tu ?"}
+          1. {mode === "DEPART" ? "Pour quel client ?" : "De quel client viens-tu ?"}
         </h2>
         <div className="relative">
           <select 
             className="absolute opacity-0 w-full h-full -z-10 pointer-events-none"
-            value={patientId}
-            onChange={(e) => setPatientId(e.target.value)}
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
             tabIndex={-1}
           >
-            <option value="">-- Choisir un patient --</option>
-            {patients.map(c => (
+            <option value="">-- Choisir un client --</option>
+            {clients.map(c => (
               <option key={c.id} value={c.id}>{c.nom}</option>
             ))}
           </select>
           
-          {!patientId ? (
+          {!clientId ? (
             <>
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-slate-400 dark:text-zinc-500" />
               </div>
               <input
                 type="text"
-                value={patientSearchQuery}
+                value={clientSearchQuery}
                 onChange={(e) => {
-                  setPatientSearchQuery(e.target.value)
-                  setShowPatientDropdown(true)
+                  setClientSearchQuery(e.target.value)
+                  setShowClientDropdown(true)
                 }}
-                onFocus={() => setShowPatientDropdown(true)}
-                onBlur={() => setTimeout(() => setShowPatientDropdown(false), 200)}
-                placeholder="Rechercher un patient..."
+                onFocus={() => setShowClientDropdown(true)}
+                onBlur={() => setTimeout(() => setShowClientDropdown(false), 200)}
+                placeholder="Rechercher un client..."
                 className="w-full pl-12 border-0 ring-1 ring-inset ring-slate-200 dark:ring-white/10 rounded-2xl p-4 bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-white text-lg font-medium focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:focus:ring-indigo-500 transition-shadow"
               />
-              {showPatientDropdown && (
+              {showClientDropdown && (
                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
-                  {patients
-                    .filter(c => !patientSearchQuery || c.nom.toLowerCase().includes(patientSearchQuery.toLowerCase()))
+                  {clients
+                    .filter(c => !clientSearchQuery || c.nom.toLowerCase().includes(clientSearchQuery.toLowerCase()))
                     .map(c => (
                       <button
                         key={c.id}
                         type="button"
                         onClick={() => {
-                          setPatientId(c.id)
-                          setPatientSearchQuery('')
-                          setShowPatientDropdown(false)
+                          setClientId(c.id)
+                          setClientSearchQuery('')
+                          setShowClientDropdown(false)
                         }}
                         className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-zinc-800 border-b border-slate-100 dark:border-white/5 last:border-0 transition-colors font-medium text-slate-900 dark:text-white text-lg"
                       >
                         {c.nom}
                       </button>
                     ))}
-                  {patients.filter(c => !patientSearchQuery || c.nom.toLowerCase().includes(patientSearchQuery.toLowerCase())).length === 0 && (
+                  {clients.filter(c => !clientSearchQuery || c.nom.toLowerCase().includes(clientSearchQuery.toLowerCase())).length === 0 && (
                     <div className="p-4 text-slate-500 dark:text-zinc-500 text-center font-medium">
-                      Aucun patient trouvé.
+                      Aucun client trouvé.
                     </div>
                   )}
                 </div>
@@ -267,11 +267,11 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
           ) : (
             <div className="flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl">
               <div className="font-semibold text-indigo-900 dark:text-indigo-100 text-lg">
-                {patients.find(c => c.id === patientId)?.nom}
+                {clients.find(c => c.id === clientId)?.nom}
               </div>
               <button
                 type="button"
-                onClick={() => setPatientId('')}
+                onClick={() => setClientId('')}
                 className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold text-sm px-3 py-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm"
               >
                 Changer
@@ -282,7 +282,7 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
       </div>
 
       {/* 2. Ajout de Matériel */}
-      <div className={`transition-all duration-500 ${!patientId ? 'opacity-40 pointer-events-none grayscale' : ''}`}>
+      <div className={`transition-all duration-500 ${!clientId ? 'opacity-40 pointer-events-none grayscale' : ''}`}>
         <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm dark:shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 dark:text-white text-lg flex items-center gap-2">
@@ -311,7 +311,7 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
           
           {search && (
             <div className="mt-4 space-y-2">
-              {filteredArticles.slice(0, 5).map(a => (
+              {filteredProduits.slice(0, 5).map(a => (
                 <button
                   key={a.id}
                   onClick={() => addToPanier(a)}
@@ -335,37 +335,37 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
           <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm dark:shadow-xl overflow-hidden animate-in slide-in-from-bottom-2 fade-in">
             <div className="p-4 bg-slate-50 dark:bg-zinc-900/80 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
               <h3 className="font-semibold text-slate-900 dark:text-white">Dans ma liste</h3>
-              <span className="bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-1 rounded-full">{panier.length} article(s)</span>
+              <span className="bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-1 rounded-full">{panier.length} produit(s)</span>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-white/5">
               {panier.map(item => (
-                <div key={item.article.id} className="p-4 bg-white dark:bg-zinc-800 flex justify-between items-center">
+                <div key={item.produit.id} className="p-4 bg-white dark:bg-zinc-800 flex justify-between items-center">
                   <div className="flex-1 pr-4">
-                    <div className="font-semibold text-slate-900 dark:text-white text-sm">{item.article.designation}</div>
-                    <div className="text-xs text-slate-500 dark:text-zinc-400">{item.article.reference}</div>
+                    <div className="font-semibold text-slate-900 dark:text-white text-sm">{item.produit.designation}</div>
+                    <div className="text-xs text-slate-500 dark:text-zinc-400">{item.produit.reference}</div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <div className="flex items-center gap-1 sm:gap-2">
-                      <button onClick={() => updateQty(item.article.id, item.quantite - 1)} className="p-3 sm:p-4 rounded-xl bg-slate-100 dark:bg-zinc-700/50 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors active:scale-95 shadow-sm ring-1 ring-slate-200 dark:ring-white/5">
+                      <button onClick={() => updateQty(item.produit.id, item.quantite - 1)} className="p-3 sm:p-4 rounded-xl bg-slate-100 dark:bg-zinc-700/50 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors active:scale-95 shadow-sm ring-1 ring-slate-200 dark:ring-white/5">
                         <Minus className="w-6 h-6" />
                       </button>
                       <input 
                         type="number" 
                         min="1" 
                         value={item.quantite} 
-                        onChange={(e) => updateQty(item.article.id, parseInt(e.target.value) || 1)}
+                        onChange={(e) => updateQty(item.produit.id, parseInt(e.target.value) || 1)}
                         className="font-black text-2xl w-14 text-center text-slate-900 dark:text-white bg-transparent border-none focus:ring-0 p-0"
                       />
-                      <button onClick={() => updateQty(item.article.id, item.quantite + 1)} className="p-3 sm:p-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors active:scale-95 shadow-sm ring-1 ring-indigo-200 dark:ring-indigo-500/30">
+                      <button onClick={() => updateQty(item.produit.id, item.quantite + 1)} className="p-3 sm:p-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors active:scale-95 shadow-sm ring-1 ring-indigo-200 dark:ring-indigo-500/30">
                         <Plus className="w-6 h-6" />
                       </button>
-                      <button onClick={() => remove(item.article.id)} className="p-3 sm:p-4 text-rose-500 hover:text-rose-600 dark:text-rose-500/70 dark:hover:text-rose-400 transition-colors ml-1 active:scale-95">
+                      <button onClick={() => remove(item.produit.id)} className="p-3 sm:p-4 text-rose-500 hover:text-rose-600 dark:text-rose-500/70 dark:hover:text-rose-400 transition-colors ml-1 active:scale-95">
                         <Trash2 className="w-6 h-6" />
                       </button>
                     </div>
                     <div className="flex gap-2 w-full justify-end pr-18">
-                      <button onClick={() => updateQty(item.article.id, item.quantite + 5)} className="px-4 py-1.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-500/20 rounded-lg text-sm font-bold active:scale-95 transition-transform">+5</button>
-                      <button onClick={() => updateQty(item.article.id, item.quantite + 10)} className="px-4 py-1.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-500/20 rounded-lg text-sm font-bold active:scale-95 transition-transform">+10</button>
+                      <button onClick={() => updateQty(item.produit.id, item.quantite + 5)} className="px-4 py-1.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-500/20 rounded-lg text-sm font-bold active:scale-95 transition-transform">+5</button>
+                      <button onClick={() => updateQty(item.produit.id, item.quantite + 10)} className="px-4 py-1.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-500/20 rounded-lg text-sm font-bold active:scale-95 transition-transform">+10</button>
                     </div>
                   </div>
                 </div>
@@ -388,7 +388,7 @@ export function DepartMatinClient({ patients, articles, username }: { patients: 
       <div className="sticky bottom-6 z-10 pt-4 pb-2">
         <button
           onClick={handleValider}
-          disabled={isSubmitting || panier.length === 0 || !patientId}
+          disabled={isSubmitting || panier.length === 0 || !clientId}
           className={`w-full text-white font-semibold text-lg p-4 rounded-2xl shadow-xl disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2 ${
             mode === 'DEPART' 
             ? 'bg-indigo-600 hover:bg-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.3)] ring-1 ring-indigo-500'

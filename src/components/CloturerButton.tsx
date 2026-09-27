@@ -7,7 +7,7 @@ export function CloturerButton() {
     <button 
       type="submit" 
       onClick={(e) => {
-        if(!window.confirm("Clôturer ce patient ? Tout le matériel non consommé sera automatiquement retourné au Pharmacie.")) {
+        if(!window.confirm("Clôturer ce client ? Tout le matériel non consommé sera automatiquement retourné au Reserve.")) {
           e.preventDefault();
         }
       }}

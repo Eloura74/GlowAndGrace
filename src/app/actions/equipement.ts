@@ -3,10 +3,10 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
-export async function getMateriels() {
-  return prisma.materiel.findMany({
+export async function getEquipements() {
+  return prisma.equipement.findMany({
     include: {
-      patient: true,
+      client: true,
       mouvements: {
         orderBy: { date: 'desc' },
         take: 5
@@ -16,13 +16,13 @@ export async function getMateriels() {
   })
 }
 
-export async function createMateriel(formData: FormData) {
+export async function createEquipement(formData: FormData) {
   const nom = formData.get("nom") as string
   const marque = formData.get("marque") as string || null
   const reference = (formData.get("reference") as string)?.trim() || null
   const valeur = parseFloat(formData.get("valeur") as string || "0")
   
-  await prisma.materiel.create({
+  await prisma.equipement.create({
     data: {
       nom,
       marque,
@@ -32,11 +32,11 @@ export async function createMateriel(formData: FormData) {
     }
   })
 
-  revalidatePath("/materiel")
+  revalidatePath("/equipement")
   revalidatePath("/")
 }
 
-export async function updateMateriel(formData: FormData) {
+export async function updateEquipement(formData: FormData) {
   const id = formData.get("id") as string
   const nom = formData.get("nom") as string
   const marque = formData.get("marque") as string || null
@@ -44,7 +44,7 @@ export async function updateMateriel(formData: FormData) {
   const valeur = parseFloat(formData.get("valeur") as string || "0")
 
   if (id) {
-    await prisma.materiel.update({
+    await prisma.equipement.update({
       where: { id },
       data: {
         nom,
@@ -53,63 +53,63 @@ export async function updateMateriel(formData: FormData) {
         valeur
       }
     })
-    revalidatePath("/materiel")
+    revalidatePath("/equipement")
     revalidatePath("/")
   }
 }
 
-export async function deleteMateriel(id: string) {
-  await prisma.materiel.delete({
+export async function deleteEquipement(id: string) {
+  await prisma.equipement.delete({
     where: { id }
   })
-  revalidatePath("/materiel")
+  revalidatePath("/equipement")
   revalidatePath("/")
 }
 
-export async function emprunterMateriel(formData: FormData) {
-  const materielId = formData.get("materielId") as string
-  const patientId = formData.get("patientId") as string || null
+export async function emprunterEquipement(formData: FormData) {
+  const equipementId = formData.get("equipementId") as string
+  const clientId = formData.get("clientId") as string || null
   const utilisateur = formData.get("utilisateur") as string || "Anonyme"
   const type = formData.get("type") as string // "Emprunt", "Retour", "Réparation", "Perte"
   const observation = formData.get("observation") as string || ""
 
   // Si on emprunte
-  if (type === "Emprunt" && patientId) {
+  if (type === "Emprunt" && clientId) {
     await prisma.$transaction([
-      prisma.mouvementMateriel.create({
-        data: { materielId, type, patientId, utilisateur, observation }
+      prisma.mouvementEquipement.create({
+        data: { equipementId, type, clientId, utilisateur, observation }
       }),
-      prisma.materiel.update({
-        where: { id: materielId },
-        data: { statut: "En Patient", patientId, utilisateur }
+      prisma.equipement.update({
+        where: { id: equipementId },
+        data: { statut: "En Client", clientId, utilisateur }
       })
     ])
   } 
   // Si on retourne
   else if (type === "Retour") {
     await prisma.$transaction([
-      prisma.mouvementMateriel.create({
-        data: { materielId, type, patientId: null, utilisateur, observation }
+      prisma.mouvementEquipement.create({
+        data: { equipementId, type, clientId: null, utilisateur, observation }
       }),
-      prisma.materiel.update({
-        where: { id: materielId },
-        data: { statut: "Disponible", patientId: null, utilisateur: null }
+      prisma.equipement.update({
+        where: { id: equipementId },
+        data: { statut: "Disponible", clientId: null, utilisateur: null }
       })
     ])
   }
   // Si en réparation ou perte
   else if (type === "Réparation" || type === "Perte") {
     await prisma.$transaction([
-      prisma.mouvementMateriel.create({
-        data: { materielId, type, patientId: null, utilisateur, observation }
+      prisma.mouvementEquipement.create({
+        data: { equipementId, type, clientId: null, utilisateur, observation }
       }),
-      prisma.materiel.update({
-        where: { id: materielId },
-        data: { statut: type === "Réparation" ? "En Réparation" : "Perdu", patientId: null, utilisateur: null }
+      prisma.equipement.update({
+        where: { id: equipementId },
+        data: { statut: type === "Réparation" ? "En Réparation" : "Perdu", clientId: null, utilisateur: null }
       })
     ])
   }
 
-  revalidatePath("/materiel")
+  revalidatePath("/equipement")
   revalidatePath("/")
 }

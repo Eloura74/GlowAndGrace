@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Article {
+model Produit {
   id                   String  @id @default(cuid())
   reference            String  @unique
   designation          String
@@ -28,14 +28,19 @@ model Article {
   updatedAt DateTime @updatedAt
 }
 
-model Patient {
+model Client {
   id     String @id @default(cuid())
   nom    String @unique
+  telephone String?
+  email     String?
+  typePeau  String?
+  allergies String?
+  notes     String?
   statut String @default("Actif")
 
   mouvements         Mouvement[]
-  materiels          Materiel[]
-  mouvementsMateriel MouvementMateriel[]
+  equipements          Equipement[]
+  mouvementsEquipement MouvementEquipement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,16 +54,16 @@ model Mouvement {
   utilisateur String?
   observation String?
 
-  articleId String
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  produitId String
+  produit   Produit @relation(fields: [produitId], references: [id], onDelete: Cascade)
 
-  patientId String?
-  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }
 
-model Materiel {
+model Equipement {
   id        String    @id @default(cuid())
   nom       String
   marque    String?
@@ -67,23 +72,23 @@ model Materiel {
   valeur    Float?    @default(0.0)
 
   statut      String   @default("Disponible")
-  patientId   String?
-  patient     Patient? @relation(fields: [patientId], references: [id])
+  clientId   String?
+  client     Client? @relation(fields: [clientId], references: [id])
   utilisateur String?
 
-  mouvements MouvementMateriel[]
+  mouvements MouvementEquipement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model MouvementMateriel {
+model MouvementEquipement {
   id          String   @id @default(cuid())
-  materielId  String
-  materiel    Materiel @relation(fields: [materielId], references: [id], onDelete: Cascade)
+  equipementId  String
+  equipement    Equipement @relation(fields: [equipementId], references: [id], onDelete: Cascade)
   type        String
-  patientId   String?
-  patient     Patient? @relation(fields: [patientId], references: [id])
+  clientId   String?
+  client     Client? @relation(fields: [clientId], references: [id])
   utilisateur String
   date        DateTime @default(now())
   observation String?
@@ -94,6 +99,6 @@ model User {
   username  String   @unique
   password  String
   email     String?
-  role      String   @default("INFIRMIER")
+  role      String   @default("ESTHETICIENNE")
   createdAt DateTime @default(now())
 }

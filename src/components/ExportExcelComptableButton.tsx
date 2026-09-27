@@ -4,22 +4,22 @@ import { FileSpreadsheet } from "lucide-react"
 import * as XLSX from "xlsx"
 
 interface Props {
-  dataPharmacie: any[]
-  dataPatients: any[]
+  dataReserve: any[]
+  dataClients: any[]
 }
 
-export function ExportExcelComptableButton({ dataPharmacie, dataPatients }: Props) {
+export function ExportExcelComptableButton({ dataReserve, dataClients }: Props) {
   const handleExport = () => {
     // Créer un nouveau classeur
     const wb = XLSX.utils.book_new()
     
     // Créer les feuilles à partir des données JSON
-    const wsPharmacie = XLSX.utils.json_to_sheet(dataPharmacie)
-    const wsPatients = XLSX.utils.json_to_sheet(dataPatients)
+    const wsReserve = XLSX.utils.json_to_sheet(dataReserve)
+    const wsClients = XLSX.utils.json_to_sheet(dataClients)
     
     // Ajouter les feuilles au classeur
-    XLSX.utils.book_append_sheet(wb, wsPharmacie, "Stock Pharmacie")
-    XLSX.utils.book_append_sheet(wb, wsPatients, "Stock Patients")
+    XLSX.utils.book_append_sheet(wb, wsReserve, "Stock Reserve")
+    XLSX.utils.book_append_sheet(wb, wsClients, "Stock Clients")
     
     // Générer le fichier avec la date du jour
     const date = new Date().toISOString().split('T')[0]

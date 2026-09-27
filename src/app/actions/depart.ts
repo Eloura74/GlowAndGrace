@@ -5,34 +5,34 @@ import { getSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 
 type DepartInput = {
-  patientId: string,
+  clientId: string,
   username: string,
   observation?: string,
-  lignes: { articleId: string, quantite: number }[]
+  lignes: { produitId: string, quantite: number }[]
 }
 
-export async function validerDepartMatin({ patientId, username, observation, lignes }: DepartInput) {
+export async function validerCabine({ clientId, username, observation, lignes }: DepartInput) {
   const session = await getSession()
   if (!session) return { error: "Non autorisé" }
 
   if (!lignes || lignes.length === 0) return { error: "Panier vide" }
-  if (!patientId) return { error: "Patient manquant" }
+  if (!clientId) return { error: "Client manquant" }
 
   try {
     // Exécuter en transaction pour éviter les erreurs partielles
     await prisma.$transaction(async (tx: any) => {
       for (const ligne of lignes) {
         
-        const article = await tx.article.findUnique({ where: { id: ligne.articleId } })
-        if (!article) throw new Error("Article introuvable")
+        const produit = await tx.produit.findUnique({ where: { id: ligne.produitId } })
+        if (!produit) throw new Error("Produit introuvable")
 
         // Créer le mouvement
         await tx.mouvement.create({
           data: {
-            articleId: ligne.articleId,
+            produitId: ligne.produitId,
             type: 'Depart',
             quantite: ligne.quantite,
-            patientId: patientId,
+            clientId: clientId,
             utilisateur: username, // Le nom du Chef d'équipe !
             observation: observation || null
           }
@@ -40,13 +40,13 @@ export async function validerDepartMatin({ patientId, username, observation, lig
       }
     })
 
-    revalidatePath("/depart-matin")
+    revalidatePath("/cabine")
     revalidatePath("/catalogue")
-    revalidatePath(`/patients/${patientId}`)
+    revalidatePath(`/clients/${clientId}`)
     
     return { success: true }
   } catch (error: any) {
-    console.error("Erreur depart-matin:", error)
+    console.error("Erreur cabine:", error)
     return { error: error.message || "Erreur lors de l'enregistrement." }
   }
 }

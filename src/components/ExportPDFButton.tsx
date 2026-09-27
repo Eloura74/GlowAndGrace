@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { Download } from "lucide-react"
-import { calculerStockArticle } from "@/lib/stockUtils"
+import { calculerStockProduit } from "@/lib/stockUtils"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 
-export function ExportPDFButton({ articles }: { articles: any[] }) {
+export function ExportPDFButton({ produits }: { produits: any[] }) {
   const [isExporting, setIsExporting] = useState(false)
 
   const handleExport = () => {
@@ -25,27 +25,27 @@ export function ExportPDFButton({ articles }: { articles: any[] }) {
 
       // Préparation des données
       let valeurTotaleGlobale = 0
-      const tableData = articles.map(article => {
-        const stock = calculerStockArticle(article, article.mouvements || [])
-        const valeurStockPharmacie = (stock.stockPharmacie * (article.prixUnitaire || 0))
-        valeurTotaleGlobale += valeurStockPharmacie
+      const tableData = produits.map(produit => {
+        const stock = calculerStockProduit(produit, produit.mouvements || [])
+        const valeurStockReserve = (stock.stockReserve * (produit.prixUnitaire || 0))
+        valeurTotaleGlobale += valeurStockReserve
 
         return [
-          article.reference,
-          article.designation,
-          article.fournisseur || "-",
-          article.categorie || "-",
-          `${stock.stockPharmacie} ${article.unite || 'u'}`,
-          `${stock.stockPatientsTotal} ${article.unite || 'u'}`,
-          `${article.prixUnitaire?.toFixed(2) || "0.00"} €`,
-          `${valeurStockPharmacie.toFixed(2)} €`
+          produit.reference,
+          produit.designation,
+          produit.fournisseur || "-",
+          produit.categorie || "-",
+          `${stock.stockReserve} ${produit.unite || 'u'}`,
+          `${stock.stockClientsTotal} ${produit.unite || 'u'}`,
+          `${produit.prixUnitaire?.toFixed(2) || "0.00"} €`,
+          `${valeurStockReserve.toFixed(2)} €`
         ]
       })
 
       // Génération du tableau
       autoTable(doc, {
         startY: 35,
-        head: [['Référence', 'Désignation', 'Fournisseur', 'Catégorie', 'Stock Pharmacie', 'Sur Patients', 'P.U. HT', 'Valeur Totale']],
+        head: [['Référence', 'Désignation', 'Fournisseur', 'Catégorie', 'Stock Reserve', 'Sur Clients', 'P.U. HT', 'Valeur Totale']],
         body: tableData,
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185] },
@@ -71,7 +71,7 @@ export function ExportPDFButton({ articles }: { articles: any[] }) {
       doc.setFontSize(12)
       doc.setTextColor(0)
       doc.setFont("helvetica", "bold")
-      doc.text(`Valeur Totale du Stock Pharmacie : ${valeurTotaleGlobale.toFixed(2)} €`, 14, finalY + 10)
+      doc.text(`Valeur Totale du Stock Reserve : ${valeurTotaleGlobale.toFixed(2)} €`, 14, finalY + 10)
 
       doc.save(`Inventaire_Stock_${new Date().toISOString().split('T')[0]}.pdf`)
     } catch (error) {

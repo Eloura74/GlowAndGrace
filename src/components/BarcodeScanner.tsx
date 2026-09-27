@@ -72,7 +72,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="font-bold text-gray-900 dark:text-zinc-50">Scanner un article</h3>
+          <h3 className="font-bold text-gray-900 dark:text-zinc-50">Scanner un produit</h3>
           <button 
             onClick={onClose}
             className="p-2 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 rounded-full hover:bg-gray-200"

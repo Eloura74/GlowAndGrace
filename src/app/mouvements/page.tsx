@@ -1,6 +1,6 @@
 import { getMouvements, createMouvement, annulerMouvement } from "@/app/actions/mouvements"
-import { getArticles } from "@/app/actions/articles"
-import { getPatients } from "@/app/actions/patients"
+import { getProduits } from "@/app/actions/produits"
+import { getClients } from "@/app/actions/clients"
 import { FileText, ArrowRightLeft, Trash2 } from "lucide-react"
 import { DeleteButton } from "@/components/DeleteButton"
 import { MouvementForm } from "@/components/MouvementForm"
@@ -11,8 +11,8 @@ export default async function MouvementsPage({ searchParams }: { searchParams: P
   const { start, end } = await searchParams
   
   let mouvements = await getMouvements()
-  const articles = await getArticles()
-  const patients = await getPatients()
+  const produits = await getProduits()
+  const clients = await getClients()
 
   if (start) {
     const startDate = new Date(start)
@@ -35,7 +35,7 @@ export default async function MouvementsPage({ searchParams }: { searchParams: P
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Formulaire Client Component */}
         <div className="lg:col-span-1">
-          <MouvementForm articles={articles} patients={patients} />
+          <MouvementForm produits={produits} clients={clients} />
         </div>
 
         {/* Historique des mouvements */}
@@ -47,9 +47,9 @@ export default async function MouvementsPage({ searchParams }: { searchParams: P
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-zinc-400 rounded-l-xl">Date</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-zinc-400">Type</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-zinc-400">Article</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-zinc-400">Produit</th>
                     <th className="px-4 py-3 text-center font-medium text-gray-500 dark:text-zinc-400">Qté</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-zinc-400">Patient / Utilisateur</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-zinc-400">Client / Utilisateur</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-zinc-400">Obs.</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-zinc-400 rounded-r-xl">Actions</th>
                   </tr>
@@ -78,8 +78,8 @@ export default async function MouvementsPage({ searchParams }: { searchParams: P
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-bold text-gray-900 dark:text-zinc-50">{mvt.article.designation}</div>
-                          <div className="text-xs text-gray-500 dark:text-zinc-400">{mvt.article.reference}</div>
+                          <div className="font-bold text-gray-900 dark:text-zinc-50">{mvt.produit.designation}</div>
+                          <div className="text-xs text-gray-500 dark:text-zinc-400">{mvt.produit.reference}</div>
                         </td>
                         <td className="px-4 py-3 text-center font-black text-lg">
                           <span className={mvt.type === 'Depart' || mvt.type === 'Consomme' || mvt.type === 'Perte' || mvt.type === 'Correction_Moins' ? 'text-orange-600' : 'text-emerald-600'}>
@@ -87,7 +87,7 @@ export default async function MouvementsPage({ searchParams }: { searchParams: P
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          {mvt.patient?.nom && <div className="font-medium text-gray-900 dark:text-zinc-50">{mvt.patient.nom}</div>}
+                          {mvt.client?.nom && <div className="font-medium text-gray-900 dark:text-zinc-50">{mvt.client.nom}</div>}
                           {mvt.utilisateur && <div className="text-xs text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded mt-1">Par: {mvt.utilisateur}</div>}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400 max-w-[150px]" title={mvt.observation || ""}>
@@ -128,8 +128,8 @@ export default async function MouvementsPage({ searchParams }: { searchParams: P
 
                     <div className="flex justify-between items-center bg-gray-50 dark:bg-zinc-950 p-3 rounded-lg border border-gray-100 dark:border-zinc-800 mt-2">
                       <div className="flex-1 overflow-hidden">
-                        <div className="font-bold text-gray-900 dark:text-zinc-50 text-sm">{mvt.article.designation}</div>
-                        <div className="text-xs text-gray-500 dark:text-zinc-400">{mvt.article.reference}</div>
+                        <div className="font-bold text-gray-900 dark:text-zinc-50 text-sm">{mvt.produit.designation}</div>
+                        <div className="text-xs text-gray-500 dark:text-zinc-400">{mvt.produit.reference}</div>
                       </div>
                       <div className={`text-xl font-bold shrink-0 ml-3 ${mvt.type === 'Depart' || mvt.type === 'Consomme' || mvt.type === 'Perte' || mvt.type === 'Correction_Moins' ? 'text-orange-600' : 'text-emerald-600'}`}>
                         {mvt.type === 'Depart' || mvt.type === 'Consomme' || mvt.type === 'Perte' || mvt.type === 'Correction_Moins' ? '-' : '+'}{mvt.quantite}
@@ -138,7 +138,7 @@ export default async function MouvementsPage({ searchParams }: { searchParams: P
 
                     <div className="flex justify-between items-center text-xs mt-2">
                       <div className="flex flex-col gap-1">
-                        {mvt.patient?.nom && <span className="font-medium text-gray-700 dark:text-zinc-200 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">📍 {mvt.patient.nom}</span>}
+                        {mvt.client?.nom && <span className="font-medium text-gray-700 dark:text-zinc-200 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">📍 {mvt.client.nom}</span>}
                         {mvt.utilisateur && <span className="font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">👤 {mvt.utilisateur}</span>}
                       </div>
                       <form action={annulerMouvement.bind(null, mvt.id)}>

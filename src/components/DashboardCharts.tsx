@@ -4,10 +4,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
 
 export function DashboardCharts({ 
   mouvementsRecents, 
-  articles 
+  produits 
 }: { 
   mouvementsRecents: any[],
-  articles: any[]
+  produits: any[]
 }) {
   // 1. Préparer les données pour le graphique des sorties (Départs et Consommés sur les 7 derniers jours)
   const last7Days = [...Array(7)].map((_, i) => {
@@ -34,16 +34,16 @@ export function DashboardCharts({
   // 2. Préparer les données pour le graphique de répartition de la valeur par catégorie
   const categoriesMap = new Map<string, number>();
   
-  articles.forEach(article => {
+  produits.forEach(produit => {
     let stockCourant = 0;
-    (article.mouvements || []).forEach((mvt: any) => {
+    (produit.mouvements || []).forEach((mvt: any) => {
       if (mvt.type === 'Achat' || mvt.type === 'Retour') stockCourant += mvt.quantite;
       if (mvt.type === 'Depart' || mvt.type === 'Consomme' || mvt.type === 'Perte') stockCourant -= mvt.quantite;
     });
     
     if (stockCourant > 0) {
-      const val = stockCourant * (article.prixUnitaire || 0);
-      const cat = article.categorie || 'Autre';
+      const val = stockCourant * (produit.prixUnitaire || 0);
+      const cat = produit.categorie || 'Autre';
       categoriesMap.set(cat, (categoriesMap.get(cat) || 0) + val);
     }
   });
@@ -54,16 +54,16 @@ export function DashboardCharts({
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
-  // 3. Top 5 des articles les plus consommés
+  // 3. Top 5 des produits les plus consommés
   const consoMap = new Map<string, number>();
-  articles.forEach(article => {
+  produits.forEach(produit => {
     let consoTotal = 0;
-    (article.mouvements || []).forEach((mvt: any) => {
+    (produit.mouvements || []).forEach((mvt: any) => {
       if (mvt.type === 'Consomme' || mvt.type === 'Depart') {
         consoTotal += mvt.quantite;
       }
     });
-    if (consoTotal > 0) consoMap.set(article.designation, consoTotal);
+    if (consoTotal > 0) consoMap.set(produit.designation, consoTotal);
   });
 
   const topConsoData = Array.from(consoMap.entries())
@@ -134,7 +134,7 @@ export function DashboardCharts({
 
       {/* Graphique : Top 5 Consommés */}
       <div className="rounded-xl border bg-white dark:bg-zinc-900 p-6 shadow-sm lg:col-span-2">
-        <h3 className="font-semibold text-gray-900 dark:text-zinc-50 mb-4">Top 5 des articles les plus utilisés</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-zinc-50 mb-4">Top 5 des produits les plus utilisés</h3>
         <div className="h-64 w-full">
           {topConsoData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">

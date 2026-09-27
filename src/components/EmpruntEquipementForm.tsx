@@ -1,46 +1,46 @@
 "use client"
 
 import { useState } from "react"
-import { emprunterMateriel } from "@/app/actions/materiel"
+import { emprunterEquipement } from "@/app/actions/equipement"
 import { ArrowRightLeft, Camera, Search } from "lucide-react"
 import dynamic from 'next/dynamic'
 
 const BarcodeScanner = dynamic(() => import('./BarcodeScanner').then(mod => mod.BarcodeScanner), { ssr: false })
 
-export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[], patients: any[] }) {
+export function EmpruntEquipementForm({ equipements, clients }: { equipements: any[], clients: any[] }) {
   const [isScanning, setIsScanning] = useState(false)
-  const [selectedMaterielId, setSelectedMaterielId] = useState("")
+  const [selectedEquipementId, setSelectedEquipementId] = useState("")
   const [actionType, setActionType] = useState("Emprunt")
   const [scanError, setScanError] = useState<string | null>(null)
 
   const [searchQuery, setSearchQuery] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
   
-  const [selectedPatientId, setSelectedPatientId] = useState("")
-  const [patientSearchQuery, setPatientSearchQuery] = useState("")
-  const [showPatientDropdown, setShowPatientDropdown] = useState(false)
+  const [selectedClientId, setSelectedClientId] = useState("")
+  const [clientSearchQuery, setClientSearchQuery] = useState("")
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
 
-  const selectedPatient = patients.find(c => c.id === selectedPatientId)
+  const selectedClient = clients.find(c => c.id === selectedClientId)
   
   const handleScan = (code: string) => {
     setIsScanning(false)
     setScanError(null)
 
     const trimmedCode = code.trim()
-    const dispositif = materiels.find(o => o.reference === trimmedCode)
+    const dispositif = equipements.find(o => o.reference === trimmedCode)
     if (dispositif) {
-      setSelectedMaterielId(dispositif.id)
+      setSelectedEquipementId(dispositif.id)
       
       // Auto-select action based on current status
       if (dispositif.statut === "Disponible") setActionType("Emprunt")
-      else if (dispositif.statut === "En Patient") setActionType("Retour")
+      else if (dispositif.statut === "En Client") setActionType("Retour")
       
     } else {
       setScanError(`Dispositif introuvable (Code lu : ${trimmedCode})`)
     }
   }
 
-  const selectedDispositif = materiels.find(o => o.id === selectedMaterielId)
+  const selectedDispositif = equipements.find(o => o.id === selectedEquipementId)
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 p-6 sticky top-6">
@@ -69,8 +69,8 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
       </div>
 
       <form action={async (formData) => {
-        await emprunterMateriel(formData)
-        setSelectedMaterielId("")
+        await emprunterEquipement(formData)
+        setSelectedEquipementId("")
         setActionType("Emprunt")
       }} className="space-y-5">
         
@@ -79,25 +79,25 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
           <div className="relative">
             {/* Native select visually hidden for form validation and submission */}
             <select 
-              name="materielId" 
+              name="equipementId" 
               required 
-              value={selectedMaterielId}
+              value={selectedEquipementId}
               onChange={(e) => {
-                setSelectedMaterielId(e.target.value)
-                const out = materiels.find(o => o.id === e.target.value)
+                setSelectedEquipementId(e.target.value)
+                const out = equipements.find(o => o.id === e.target.value)
                 if (out?.statut === "Disponible") setActionType("Emprunt")
-                if (out?.statut === "En Patient") setActionType("Retour")
+                if (out?.statut === "En Client") setActionType("Retour")
               }}
               className="absolute opacity-0 w-full h-full -z-10 pointer-events-none"
               tabIndex={-1}
             >
               <option value="">-- Choisir un dispositif --</option>
-              {materiels.map(o => (
+              {equipements.map(o => (
                 <option key={o.id} value={o.id}>{o.id}</option>
               ))}
             </select>
 
-            {!selectedMaterielId ? (
+            {!selectedEquipementId ? (
               <>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
@@ -117,7 +117,7 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
                 
                 {showDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {materiels
+                    {equipements
                       .filter(o => 
                         !searchQuery || 
                         o.nom.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -129,11 +129,11 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
                           key={o.id}
                           type="button"
                           onClick={() => {
-                            setSelectedMaterielId(o.id)
+                            setSelectedEquipementId(o.id)
                             setSearchQuery('')
                             setShowDropdown(false)
                             if (o.statut === "Disponible") setActionType("Emprunt")
-                            if (o.statut === "En Patient") setActionType("Retour")
+                            if (o.statut === "En Client") setActionType("Retour")
                           }}
                           className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800 border-b border-gray-100 dark:border-zinc-800 last:border-0 transition-colors flex justify-between items-center"
                         >
@@ -143,14 +143,14 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
                           </div>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                             o.statut === 'Disponible' ? 'bg-emerald-100 text-emerald-800' :
-                            o.statut === 'En Patient' ? 'bg-orange-100 text-orange-800' :
+                            o.statut === 'En Client' ? 'bg-orange-100 text-orange-800' :
                             'bg-red-100 text-red-800'
                           }`}>
                             {o.statut}
                           </span>
                         </button>
                       ))}
-                    {materiels.filter(o => !searchQuery || o.nom.toLowerCase().includes(searchQuery.toLowerCase()) || (o.reference && o.reference.toLowerCase().includes(searchQuery.toLowerCase()))).length === 0 && (
+                    {equipements.filter(o => !searchQuery || o.nom.toLowerCase().includes(searchQuery.toLowerCase()) || (o.reference && o.reference.toLowerCase().includes(searchQuery.toLowerCase()))).length === 0 && (
                       <div className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400 text-center">
                         Aucun dispositif trouvé.
                       </div>
@@ -165,7 +165,7 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
                   <div className="text-xs text-blue-700 dark:text-blue-300">Réf: {selectedDispositif?.reference || 'Aucune'}</div>
                   <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                     selectedDispositif?.statut === 'Disponible' ? 'bg-emerald-100 text-emerald-800' :
-                    selectedDispositif?.statut === 'En Patient' ? 'bg-orange-100 text-orange-800' :
+                    selectedDispositif?.statut === 'En Client' ? 'bg-orange-100 text-orange-800' :
                     'bg-red-100 text-red-800'
                   }`}>
                     {selectedDispositif?.statut}
@@ -174,7 +174,7 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedMaterielId('')
+                    setSelectedEquipementId('')
                     setActionType("Emprunt") // Reset to default
                   }}
                   className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-bold"
@@ -210,63 +210,63 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
 
         {actionType === 'Emprunt' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Patient de destination *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Client de destination *</label>
             <div className="relative">
               {/* Native select visually hidden for form validation and submission */}
               <select 
-                name="patientId" 
+                name="clientId" 
                 required 
-                value={selectedPatientId}
-                onChange={(e) => setSelectedPatientId(e.target.value)}
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
                 className="absolute opacity-0 w-full h-full -z-10 pointer-events-none"
                 tabIndex={-1}
               >
                 <option value="">-- Sélectionner --</option>
-                {patients.map(c => (
+                {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.id}</option>
                 ))}
               </select>
 
-              {!selectedPatientId ? (
+              {!selectedClientId ? (
                 <>
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
                   </div>
                   <input
                     type="text"
-                    value={patientSearchQuery}
+                    value={clientSearchQuery}
                     onChange={(e) => {
-                      setPatientSearchQuery(e.target.value)
-                      setShowPatientDropdown(true)
+                      setClientSearchQuery(e.target.value)
+                      setShowClientDropdown(true)
                     }}
-                    onFocus={() => setShowPatientDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowPatientDropdown(false), 200)}
+                    onFocus={() => setShowClientDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowClientDropdown(false), 200)}
                     className="block w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 focus:border-blue-500 focus:ring-blue-500 text-sm transition-colors"
-                    placeholder="Rechercher un patient..."
+                    placeholder="Rechercher un client..."
                   />
                   
-                  {showPatientDropdown && (
+                  {showClientDropdown && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                      {patients
-                        .filter(c => !patientSearchQuery || c.nom.toLowerCase().includes(patientSearchQuery.toLowerCase()))
+                      {clients
+                        .filter(c => !clientSearchQuery || c.nom.toLowerCase().includes(clientSearchQuery.toLowerCase()))
                         .slice(0, 50)
                         .map(c => (
                           <button
                             key={c.id}
                             type="button"
                             onClick={() => {
-                              setSelectedPatientId(c.id)
-                              setPatientSearchQuery('')
-                              setShowPatientDropdown(false)
+                              setSelectedClientId(c.id)
+                              setClientSearchQuery('')
+                              setShowClientDropdown(false)
                             }}
                             className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800 border-b border-gray-100 dark:border-zinc-800 last:border-0 transition-colors"
                           >
                             <div className="font-medium text-gray-900 dark:text-zinc-100">{c.nom}</div>
                           </button>
                         ))}
-                      {patients.filter(c => !patientSearchQuery || c.nom.toLowerCase().includes(patientSearchQuery.toLowerCase())).length === 0 && (
+                      {clients.filter(c => !clientSearchQuery || c.nom.toLowerCase().includes(clientSearchQuery.toLowerCase())).length === 0 && (
                         <div className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400 text-center">
-                          Aucun patient trouvé.
+                          Aucun client trouvé.
                         </div>
                       )}
                     </div>
@@ -275,11 +275,11 @@ export function EmpruntMaterielForm({ materiels, patients }: { materiels: any[],
               ) : (
                 <div className="flex items-center justify-between p-3 border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-900/20 rounded-md">
                   <div>
-                    <div className="text-sm font-medium text-blue-900 dark:text-blue-100">{selectedPatient?.nom}</div>
+                    <div className="text-sm font-medium text-blue-900 dark:text-blue-100">{selectedClient?.nom}</div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setSelectedPatientId('')}
+                    onClick={() => setSelectedClientId('')}
                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-bold"
                   >
                     Changer

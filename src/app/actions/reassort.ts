@@ -3,11 +3,11 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
-export async function marquerFournisseurCommeCommande(lignesCommande: { articleId: string, quantiteUnites: number }[]) {
+export async function marquerFournisseurCommeCommande(lignesCommande: { produitId: string, quantiteUnites: number }[]) {
   const date = new Date()
   
   const mouvements = lignesCommande.map(ligne => ({
-    articleId: ligne.articleId,
+    produitId: ligne.produitId,
     type: "Achat",
     quantite: ligne.quantiteUnites,
     date: date,

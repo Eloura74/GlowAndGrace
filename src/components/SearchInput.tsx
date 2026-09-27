@@ -37,7 +37,7 @@ export function SearchInput() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg leading-5 bg-white dark:bg-zinc-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
-        placeholder="Chercher un article, une référence..."
+        placeholder="Chercher un produit, une référence..."
       />
       {query && (
         <button 

@@ -1,21 +1,21 @@
 import { getSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import prisma from "@/lib/prisma"
-import { DepartMatinClient } from "./DepartMatinClient"
+import { CabineClient } from "./CabineClient"
 import { LogOut } from "lucide-react"
 import { logout } from "@/app/actions/auth"
 import { ThemeToggle } from "@/components/ThemeToggle"
 
-export default async function DepartMatinPage() {
+export default async function CabinePage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const patients = await prisma.patient.findMany({
+  const clients = await prisma.client.findMany({
     where: { statut: 'Actif' },
     orderBy: { nom: 'asc' }
   })
 
-  const allArticles = await prisma.article.findMany({
+  const allProduits = await prisma.produit.findMany({
     include: {
       mouvements: true
     },
@@ -23,7 +23,7 @@ export default async function DepartMatinPage() {
   })
 
   // Calcul du stock actuel
-  const articlesWithStock = allArticles.map((a: any) => {
+  const produitsWithStock = allProduits.map((a: any) => {
     let stock = a.stockInitial
     for (const m of a.mouvements) {
       if (['Achat', 'Retour', 'Correction_Plus'].includes(m.type)) stock += m.quantite
@@ -45,7 +45,7 @@ export default async function DepartMatinPage() {
       {/* Header Mobile / Tablette (Pas de sidebar) */}
       <header className="bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-white/10 p-4 flex justify-between items-center shadow-md dark:shadow-lg">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Départ Patient</h1>
+          <h1 className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Départ Client</h1>
           <p className="text-sm font-medium text-gray-500 dark:text-zinc-400">Connecté : <span className="text-blue-600 dark:text-indigo-400">{session.username}</span></p>
         </div>
         <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export default async function DepartMatinPage() {
       </header>
 
       <main className="flex-1 p-4 sm:p-6 lg:max-w-4xl lg:mx-auto w-full selection:bg-indigo-500/30">
-        <DepartMatinClient patients={patients} articles={articlesWithStock} username={session.username} />
+        <CabineClient clients={clients} produits={produitsWithStock} username={session.username} />
       </main>
     </div>
   )

@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma"
 import { getSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 
-export async function corrigerStock(articleId: string, vraiStock: number) {
+export async function corrigerStock(produitId: string, vraiStock: number) {
   try {
     const session = await getSession()
     if (!session || session.role !== "MEDECIN_CHEF") {
@@ -14,7 +14,7 @@ export async function corrigerStock(articleId: string, vraiStock: number) {
     await prisma.$transaction(async (tx) => {
       // Calculer le stock actuel
       const mouvements = await tx.mouvement.findMany({
-        where: { articleId }
+        where: { produitId }
       })
 
       let stockActuel = 0
@@ -36,7 +36,7 @@ export async function corrigerStock(articleId: string, vraiStock: number) {
         data: {
           type,
           quantite,
-          articleId,
+          produitId,
           utilisateur: session.username,
           observation: `Inventaire rapide (Ancien stock: ${stockActuel})`
         }

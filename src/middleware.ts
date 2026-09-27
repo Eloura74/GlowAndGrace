@@ -3,8 +3,8 @@ import type { NextRequest } from 'next/server'
 import { getSession } from './lib/auth'
 
 // Specify which routes are protected
-const protectedRoutes = ['/', '/catalogue', '/patients', '/reassort', '/inventaire']
-const chefRoutes = ['/depart-matin']
+const protectedRoutes = ['/', '/catalogue', '/clients', '/reassort', '/inventaire']
+const chefRoutes = ['/cabine']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -29,13 +29,13 @@ export async function middleware(request: NextRequest) {
     if (session.role === 'MEDECIN_CHEF') {
       return NextResponse.redirect(new URL('/', request.url))
     } else {
-      return NextResponse.redirect(new URL('/depart-matin', request.url))
+      return NextResponse.redirect(new URL('/cabine', request.url))
     }
   }
 
-  // 3. Chefs d'équipe trying to access Gerant routes -> Redirect to depart-matin
-  if (session && session.role === 'INFIRMIER' && protectedRoutes.some(r => pathname === r || pathname.startsWith(`${r}/`))) {
-    return NextResponse.redirect(new URL('/depart-matin', request.url))
+  // 3. Chefs d'équipe trying to access Gerant routes -> Redirect to cabine
+  if (session && session.role === 'ESTHETICIENNE' && protectedRoutes.some(r => pathname === r || pathname.startsWith(`${r}/`))) {
+    return NextResponse.redirect(new URL('/cabine', request.url))
   }
 
   return NextResponse.next()

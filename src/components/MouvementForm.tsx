@@ -8,33 +8,33 @@ import { createMouvement } from '@/app/actions/mouvements'
 // Dynamic import with SSR false to prevent 'window is not defined' during build
 const BarcodeScanner = dynamic(() => import('./BarcodeScanner').then(mod => mod.BarcodeScanner), { ssr: false })
 
-export function MouvementForm({ articles, patients }: { articles: any[], patients: any[] }) {
+export function MouvementForm({ produits, clients }: { produits: any[], clients: any[] }) {
   const [isScanning, setIsScanning] = useState(false)
-  const [selectedArticleId, setSelectedArticleId] = useState('')
+  const [selectedProduitId, setSelectedProduitId] = useState('')
   const [scanError, setScanError] = useState<string | null>(null)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
 
-  const [selectedPatientId, setSelectedPatientId] = useState('')
-  const [patientSearchQuery, setPatientSearchQuery] = useState('')
-  const [showPatientDropdown, setShowPatientDropdown] = useState(false)
+  const [selectedClientId, setSelectedClientId] = useState('')
+  const [clientSearchQuery, setClientSearchQuery] = useState('')
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
 
-  const selectedArticle = articles.find(a => a.id === selectedArticleId)
-  const selectedPatient = patients.find(c => c.id === selectedPatientId)
+  const selectedProduit = produits.find(a => a.id === selectedProduitId)
+  const selectedClient = clients.find(c => c.id === selectedClientId)
 
   const handleScan = (code: string) => {
     setIsScanning(false)
     setScanError(null)
 
-    // Chercher l'article par codeBarre
+    // Chercher l'produit par codeBarre
     const trimmedCode = code.trim()
-    const article = articles.find(a => a.codeBarre === trimmedCode)
-    if (article) {
-      setSelectedArticleId(article.id)
+    const produit = produits.find(a => a.codeBarre === trimmedCode)
+    if (produit) {
+      setSelectedProduitId(produit.id)
       // On pourrait aussi jouer un petit son de succès ici
     } else {
-      setScanError(`Aucun article trouvé pour le code : ${code}`)
+      setScanError(`Aucun produit trouvé pour le code : ${code}`)
     }
   }
 
@@ -62,33 +62,33 @@ export function MouvementForm({ articles, patients }: { articles: any[], patient
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200">Type de mouvement</label>
           <select name="type" className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 px-3 py-2 text-sm bg-white dark:bg-zinc-900">
-            <option value="Depart">Départ vers Patient</option>
-            <option value="Retour">Retour de Patient</option>
-            <option value="Achat">Achat / Entrée Pharmacie</option>
+            <option value="Depart">Départ vers Client</option>
+            <option value="Retour">Retour de Client</option>
+            <option value="Achat">Achat / Entrée Reserve</option>
             <option value="Consomme">Consommé / Posé</option>
             <option value="Perte">Perdu / Cassé</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Article</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Produit</label>
           <div className="relative">
             {/* Native select visually hidden for form validation and submission */}
             <select 
               required 
-              name="articleId" 
-              value={selectedArticleId}
-              onChange={(e) => setSelectedArticleId(e.target.value)}
+              name="produitId" 
+              value={selectedProduitId}
+              onChange={(e) => setSelectedProduitId(e.target.value)}
               className="absolute opacity-0 w-full h-full -z-10 pointer-events-none"
               tabIndex={-1}
             >
               <option value="">-- Sélectionner --</option>
-              {articles.map(a => (
+              {produits.map(a => (
                 <option key={a.id} value={a.id}>{a.id}</option>
               ))}
             </select>
 
-            {!selectedArticleId ? (
+            {!selectedProduitId ? (
               <>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
@@ -103,12 +103,12 @@ export function MouvementForm({ articles, patients }: { articles: any[], patient
                   onFocus={() => setShowDropdown(true)}
                   onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                   className="block w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 focus:border-blue-500 focus:ring-blue-500 text-sm transition-colors"
-                  placeholder="Rechercher un article (référence, nom)..."
+                  placeholder="Rechercher un produit (référence, nom)..."
                 />
                 
                 {showDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {articles
+                    {produits
                       .filter(a => 
                         !searchQuery || 
                         a.designation.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -120,7 +120,7 @@ export function MouvementForm({ articles, patients }: { articles: any[], patient
                           key={a.id}
                           type="button"
                           onClick={() => {
-                            setSelectedArticleId(a.id)
+                            setSelectedProduitId(a.id)
                             setSearchQuery('')
                             setShowDropdown(false)
                           }}
@@ -130,9 +130,9 @@ export function MouvementForm({ articles, patients }: { articles: any[], patient
                           <div className="text-xs text-gray-500 dark:text-zinc-400">Réf: {a.reference || 'Aucune'}</div>
                         </button>
                       ))}
-                    {articles.filter(a => !searchQuery || a.designation.toLowerCase().includes(searchQuery.toLowerCase()) || (a.reference && a.reference.toLowerCase().includes(searchQuery.toLowerCase()))).length === 0 && (
+                    {produits.filter(a => !searchQuery || a.designation.toLowerCase().includes(searchQuery.toLowerCase()) || (a.reference && a.reference.toLowerCase().includes(searchQuery.toLowerCase()))).length === 0 && (
                       <div className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400 text-center">
-                        Aucun article trouvé.
+                        Aucun produit trouvé.
                       </div>
                     )}
                   </div>
@@ -141,12 +141,12 @@ export function MouvementForm({ articles, patients }: { articles: any[], patient
             ) : (
               <div className="flex items-center justify-between p-3 border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-900/20 rounded-md">
                 <div>
-                  <div className="text-sm font-medium text-blue-900 dark:text-blue-100">{selectedArticle?.designation}</div>
-                  <div className="text-xs text-blue-700 dark:text-blue-300">Réf: {selectedArticle?.reference || 'Aucune'}</div>
+                  <div className="text-sm font-medium text-blue-900 dark:text-blue-100">{selectedProduit?.designation}</div>
+                  <div className="text-xs text-blue-700 dark:text-blue-300">Réf: {selectedProduit?.reference || 'Aucune'}</div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedArticleId('')}
+                  onClick={() => setSelectedProduitId('')}
                   className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-bold"
                 >
                   Changer
@@ -158,61 +158,61 @@ export function MouvementForm({ articles, patients }: { articles: any[], patient
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Patient (si applicable)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Client (si applicable)</label>
             <div className="relative">
               <select 
-                name="patientId" 
-                value={selectedPatientId}
-                onChange={(e) => setSelectedPatientId(e.target.value)}
+                name="clientId" 
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
                 className="absolute opacity-0 w-full h-full -z-10 pointer-events-none"
                 tabIndex={-1}
               >
-                <option value="">-- Aucun / Pharmacie --</option>
-                {patients.map(c => (
+                <option value="">-- Aucun / Reserve --</option>
+                {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.id}</option>
                 ))}
               </select>
 
-              {!selectedPatientId ? (
+              {!selectedClientId ? (
                 <>
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
                   </div>
                   <input
                     type="text"
-                    value={patientSearchQuery}
+                    value={clientSearchQuery}
                     onChange={(e) => {
-                      setPatientSearchQuery(e.target.value)
-                      setShowPatientDropdown(true)
+                      setClientSearchQuery(e.target.value)
+                      setShowClientDropdown(true)
                     }}
-                    onFocus={() => setShowPatientDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowPatientDropdown(false), 200)}
+                    onFocus={() => setShowClientDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowClientDropdown(false), 200)}
                     className="block w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 focus:border-blue-500 focus:ring-blue-500 text-sm transition-colors"
-                    placeholder="Rechercher un patient..."
+                    placeholder="Rechercher un client..."
                   />
                   
-                  {showPatientDropdown && (
+                  {showClientDropdown && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                      {patients
-                        .filter(c => !patientSearchQuery || c.nom.toLowerCase().includes(patientSearchQuery.toLowerCase()))
+                      {clients
+                        .filter(c => !clientSearchQuery || c.nom.toLowerCase().includes(clientSearchQuery.toLowerCase()))
                         .slice(0, 50)
                         .map(c => (
                           <button
                             key={c.id}
                             type="button"
                             onClick={() => {
-                              setSelectedPatientId(c.id)
-                              setPatientSearchQuery('')
-                              setShowPatientDropdown(false)
+                              setSelectedClientId(c.id)
+                              setClientSearchQuery('')
+                              setShowClientDropdown(false)
                             }}
                             className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800 border-b border-gray-100 dark:border-zinc-800 last:border-0 transition-colors"
                           >
                             <div className="font-medium text-gray-900 dark:text-zinc-100">{c.nom}</div>
                           </button>
                         ))}
-                      {patients.filter(c => !patientSearchQuery || c.nom.toLowerCase().includes(patientSearchQuery.toLowerCase())).length === 0 && (
+                      {clients.filter(c => !clientSearchQuery || c.nom.toLowerCase().includes(clientSearchQuery.toLowerCase())).length === 0 && (
                         <div className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400 text-center">
-                          Aucun patient trouvé.
+                          Aucun client trouvé.
                         </div>
                       )}
                     </div>
@@ -221,11 +221,11 @@ export function MouvementForm({ articles, patients }: { articles: any[], patient
               ) : (
                 <div className="flex items-center justify-between p-3 border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-900/20 rounded-md">
                   <div>
-                    <div className="text-sm font-medium text-blue-900 dark:text-blue-100">{selectedPatient?.nom}</div>
+                    <div className="text-sm font-medium text-blue-900 dark:text-blue-100">{selectedClient?.nom}</div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setSelectedPatientId('')}
+                    onClick={() => setSelectedClientId('')}
                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-bold"
                   >
                     Changer

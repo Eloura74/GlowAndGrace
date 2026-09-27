@@ -5,7 +5,7 @@ import { Search, ScanBarcode, Box, CheckCircle2 } from "lucide-react"
 import { corrigerStock } from "@/app/actions/inventaire"
 import { BarcodeScanner } from "@/components/BarcodeScanner"
 
-type Article = {
+type Produit = {
   id: string
   reference: string
   designation: string
@@ -14,55 +14,55 @@ type Article = {
   stockActuel: number
 }
 
-export function InventaireClient({ articles }: { articles: Article[] }) {
+export function InventaireClient({ produits }: { produits: Produit[] }) {
   const [search, setSearch] = useState("")
   const [isScanning, setIsScanning] = useState(false)
   
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
+  const [selectedProduit, setSelectedProduit] = useState<Produit | null>(null)
   const [vraiStock, setVraiStock] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  const filteredArticles = articles.filter(a => 
+  const filteredProduits = produits.filter(a => 
     a.designation.toLowerCase().includes(search.toLowerCase()) || 
     a.reference.toLowerCase().includes(search.toLowerCase()) ||
     (a.codeBarre && a.codeBarre.includes(search))
   ).slice(0, 5) // Garder seulement les 5 premiers pour ne pas surcharger
 
   const handleScan = (decodedText: string) => {
-    const found = articles.find(a => a.codeBarre === decodedText || a.reference === decodedText)
+    const found = produits.find(a => a.codeBarre === decodedText || a.reference === decodedText)
     if (found) {
-      handleSelectArticle(found)
+      handleSelectProduit(found)
       setIsScanning(false)
     } else {
       alert("Code barre introuvable : " + decodedText)
     }
   }
 
-  const handleSelectArticle = (article: Article) => {
-    setSelectedArticle(article)
+  const handleSelectProduit = (produit: Produit) => {
+    setSelectedProduit(produit)
     setVraiStock("")
     setSearch("")
     setSuccess(false)
   }
 
   const handleValiderCorrection = async () => {
-    if (!selectedArticle) return
+    if (!selectedProduit) return
     const stockInt = parseInt(vraiStock, 10)
     if (isNaN(stockInt) || stockInt < 0) {
       return alert("Veuillez entrer un nombre valide positif ou nul.")
     }
 
-    if (stockInt === selectedArticle.stockActuel) {
+    if (stockInt === selectedProduit.stockActuel) {
       return alert("Le stock réel renseigné est identique au stock actuel enregistré.")
     }
 
     setIsSubmitting(true)
-    const res = await corrigerStock(selectedArticle.id, stockInt)
+    const res = await corrigerStock(selectedProduit.id, stockInt)
     if (res.success) {
       setSuccess(true)
-      const updatedArticle = { ...selectedArticle, stockActuel: stockInt }
-      setSelectedArticle(updatedArticle)
+      const updatedProduit = { ...selectedProduit, stockActuel: stockInt }
+      setSelectedProduit(updatedProduit)
       
       // La page mère devra rafraichir les données, Next.js va revalider le path.
       setVraiStock("")
@@ -90,7 +90,7 @@ export function InventaireClient({ articles }: { articles: Article[] }) {
       <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-gray-900 dark:text-zinc-50 flex items-center gap-2">
-            <Search className="w-5 h-5 text-blue-600"/> Trouver un article
+            <Search className="w-5 h-5 text-blue-600"/> Trouver un produit
           </h2>
           <button 
             onClick={() => setIsScanning(true)}
@@ -111,20 +111,20 @@ export function InventaireClient({ articles }: { articles: Article[] }) {
             value={search}
             onChange={e => {
               setSearch(e.target.value)
-              if (selectedArticle) setSelectedArticle(null)
+              if (selectedProduit) setSelectedProduit(null)
             }}
           />
         </div>
 
-        {search && !selectedArticle && (
+        {search && !selectedProduit && (
           <div className="mt-4 space-y-2">
-            {filteredArticles.length === 0 ? (
+            {filteredProduits.length === 0 ? (
               <div className="p-4 text-gray-500 dark:text-zinc-400 text-center bg-gray-50 dark:bg-zinc-950 rounded-xl">Aucun produit trouvé.</div>
             ) : (
-              filteredArticles.map(a => (
+              filteredProduits.map(a => (
                 <button
                   key={a.id}
-                  onClick={() => handleSelectArticle(a)}
+                  onClick={() => handleSelectProduit(a)}
                   className="w-full text-left p-4 bg-gray-50 dark:bg-zinc-950 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl flex justify-between items-center transition-colors"
                 >
                   <div>
@@ -142,23 +142,23 @@ export function InventaireClient({ articles }: { articles: Article[] }) {
         )}
       </div>
 
-      {/* Article Sélectionné */}
-      {selectedArticle && (
+      {/* Produit Sélectionné */}
+      {selectedProduit && (
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border-2 border-blue-500 shadow-xl space-y-6 animate-in slide-in-from-bottom-4">
           <div className="flex justify-between items-start">
             <div>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-bold mb-2">
-                <Box className="w-3.5 h-3.5" /> {selectedArticle.categorie}
+                <Box className="w-3.5 h-3.5" /> {selectedProduit.categorie}
               </div>
-              <h3 className="font-black text-xl text-gray-900 dark:text-zinc-50">{selectedArticle.designation}</h3>
-              <p className="text-gray-500 dark:text-zinc-400 font-mono mt-1">{selectedArticle.reference}</p>
+              <h3 className="font-black text-xl text-gray-900 dark:text-zinc-50">{selectedProduit.designation}</h3>
+              <p className="text-gray-500 dark:text-zinc-400 font-mono mt-1">{selectedProduit.reference}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 dark:bg-zinc-950 p-4 rounded-xl border border-gray-100 dark:border-zinc-800 text-center">
               <div className="text-sm text-gray-500 dark:text-zinc-400 font-medium mb-1">Stock Informatique</div>
-              <div className="text-3xl font-black text-gray-900 dark:text-zinc-50">{selectedArticle.stockActuel}</div>
+              <div className="text-3xl font-black text-gray-900 dark:text-zinc-50">{selectedProduit.stockActuel}</div>
             </div>
             
             <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center relative">

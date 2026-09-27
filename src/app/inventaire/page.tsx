@@ -1,9 +1,9 @@
-import { getArticles } from "@/app/actions/articles"
+import { getProduits } from "@/app/actions/produits"
 import { InventaireForm } from "@/components/InventaireForm"
 import { PackageSearch } from "lucide-react"
 
 export default async function InventairePage() {
-  const articles = await getArticles()
+  const produits = await getProduits()
 
   return (
     <div className="space-y-6">
@@ -19,7 +19,7 @@ export default async function InventairePage() {
       </p>
 
       <div className="max-w-xl mx-auto mt-8">
-        <InventaireForm articles={articles} />
+        <InventaireForm produits={produits} />
       </div>
     </div>
   )

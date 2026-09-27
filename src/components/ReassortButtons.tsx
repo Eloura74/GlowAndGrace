@@ -5,7 +5,7 @@ import { FileDown, CheckCircle } from "lucide-react"
 import { marquerFournisseurCommeCommande } from "@/app/actions/reassort"
 
 type ReassortItem = {
-  articleId: string
+  produitId: string
   reference: string
   referenceFournisseur?: string
   designation: string
@@ -44,10 +44,10 @@ export function ReassortButtons({ fournisseur, items }: { fournisseur: string, i
   }
 
   const handleMarquerCommande = async () => {
-    if (confirm(`Veux-tu vraiment marquer tous les articles de ${fournisseur} comme commandés ? Cela va ajouter les quantités au stock d'un coup.`)) {
+    if (confirm(`Veux-tu vraiment marquer tous les produits de ${fournisseur} comme commandés ? Cela va ajouter les quantités au stock d'un coup.`)) {
       setLoading(true)
       const lignes = items.map(item => ({
-        articleId: item.articleId,
+        produitId: item.produitId,
         quantiteUnites: item.boitesACommander * item.quantiteParBoite // On ajoute le multiple exact de boîtes
       }))
       await marquerFournisseurCommeCommande(lignes)

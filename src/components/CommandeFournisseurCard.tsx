@@ -4,11 +4,11 @@ import { useState } from "react";
 import { ShoppingCart, Check, FileDown, Mail } from "lucide-react";
 
 interface OrderItem {
-  articleId: string;
+  produitId: string;
   designation: string;
   reference: string;
   referenceFournisseur?: string;
-  stockPharmacie: number;
+  stockReserve: number;
   stockMinimum: number;
   quantiteParBoite: number;
   unite?: string;
@@ -22,7 +22,7 @@ interface Props {
 
 export function CommandeFournisseurCard({ fournisseur, items }: Props) {
   const [quantities, setQuantities] = useState<Record<string, number>>(
-    items.reduce((acc, item) => ({ ...acc, [item.articleId]: item.suggestedQuantity }), {})
+    items.reduce((acc, item) => ({ ...acc, [item.produitId]: item.suggestedQuantity }), {})
   );
 
   return (
@@ -50,20 +50,20 @@ export function CommandeFournisseurCard({ fournisseur, items }: Props) {
           </thead>
           <tbody className="divide-y dark:divide-zinc-800">
             {items.map((item) => (
-              <tr key={item.articleId} className="hover:bg-gray-50 dark:hover:bg-zinc-900/50">
+              <tr key={item.produitId} className="hover:bg-gray-50 dark:hover:bg-zinc-900/50">
                 <td className="px-4 py-3">
                   <div className="font-medium">{item.designation}</div>
                   <div className="text-xs text-gray-500">{item.reference} {item.referenceFournisseur && `(Fournisseur: ${item.referenceFournisseur})`}</div>
                 </td>
-                <td className="px-4 py-3 text-center text-red-600 font-bold">{item.stockPharmacie}</td>
+                <td className="px-4 py-3 text-center text-red-600 font-bold">{item.stockReserve}</td>
                 <td className="px-4 py-3 text-center text-gray-500">{item.stockMinimum}</td>
                 <td className="px-4 py-3 text-center">
                   <input
                     type="number"
                     min="1"
                     className="w-20 text-center border rounded-md p-1 dark:bg-zinc-800 dark:border-zinc-700"
-                    value={quantities[item.articleId] || 0}
-                    onChange={(e) => setQuantities({ ...quantities, [item.articleId]: parseInt(e.target.value) || 0 })}
+                    value={quantities[item.produitId] || 0}
+                    onChange={(e) => setQuantities({ ...quantities, [item.produitId]: parseInt(e.target.value) || 0 })}
                   />
                 </td>
               </tr>

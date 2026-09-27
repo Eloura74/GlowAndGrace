@@ -3,18 +3,18 @@
 import { useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { Camera, CheckCircle2, AlertTriangle, Scale, PlusCircle, Edit3, X, Save, Search } from 'lucide-react'
-import { calculerStockArticle } from '@/lib/stockUtils'
+import { calculerStockProduit } from '@/lib/stockUtils'
 import { corrigerStock } from '@/app/actions/mouvements'
-import { creerArticleEtStock, updateInfosRapides } from '@/app/actions/articles'
+import { creerProduitEtStock, updateInfosRapides } from '@/app/actions/produits'
 
 // Dynamic import with SSR false to prevent 'window is not defined' during build
 const BarcodeScanner = dynamic(() => import('./BarcodeScanner').then(mod => mod.BarcodeScanner), { ssr: false })
 
-export function InventaireForm({ articles }: { articles: any[] }) {
+export function InventaireForm({ produits }: { produits: any[] }) {
   const [isScanning, setIsScanning] = useState(false)
   const [mode, setMode] = useState<'idle' | 'known' | 'unknown'>('idle')
   const [scannedCode, setScannedCode] = useState<string | null>(null)
-  const [selectedArticleId, setSelectedArticleId] = useState('')
+  const [selectedProduitId, setSelectedProduitId] = useState('')
   const [scanError, setScanError] = useState<string | null>(null)
   
   // Real quantity input
@@ -27,25 +27,25 @@ export function InventaireForm({ articles }: { articles: any[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
 
-  // Quick edit mode (for known articles)
+  // Quick edit mode (for known produits)
   const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [editDesignation, setEditDesignation] = useState('')
   const [editFournisseur, setEditFournisseur] = useState('')
   const [editReference, setEditReference] = useState('')
 
-  // Create mode (for unknown articles)
+  // Create mode (for unknown produits)
   const [newDesignation, setNewDesignation] = useState('')
   const [newFournisseur, setNewFournisseur] = useState('')
 
-  const selectedArticle = useMemo(() => {
-    return articles.find(a => a.id === selectedArticleId)
-  }, [selectedArticleId, articles])
+  const selectedProduit = useMemo(() => {
+    return produits.find(a => a.id === selectedProduitId)
+  }, [selectedProduitId, produits])
 
   const stockTheorique = useMemo(() => {
-    if (!selectedArticle) return 0
-    const info = calculerStockArticle(selectedArticle, selectedArticle.mouvements || [])
-    return info.stockPharmacie
-  }, [selectedArticle])
+    if (!selectedProduit) return 0
+    const info = calculerStockProduit(selectedProduit, selectedProduit.mouvements || [])
+    return info.stockReserve
+  }, [selectedProduit])
 
   const ecart = useMemo(() => {
     if (quantiteReelle === '') return null
@@ -61,18 +61,18 @@ export function InventaireForm({ articles }: { articles: any[] }) {
     setIsEditingInfo(false)
 
     const trimmedCode = code.trim()
-    const article = articles.find(a => a.codeBarre === trimmedCode)
+    const produit = produits.find(a => a.codeBarre === trimmedCode)
     
-    if (article) {
-      setSelectedArticleId(article.id)
+    if (produit) {
+      setSelectedProduitId(produit.id)
       setMode('known')
-      setEditDesignation(article.designation)
-      setEditFournisseur(article.fournisseur || '')
-      setEditReference(article.reference || '')
+      setEditDesignation(produit.designation)
+      setEditFournisseur(produit.fournisseur || '')
+      setEditReference(produit.reference || '')
     } else {
       setScannedCode(trimmedCode)
       setMode('unknown')
-      setSelectedArticleId('')
+      setSelectedProduitId('')
       setNewDesignation('')
       setNewFournisseur('')
     }
@@ -82,16 +82,16 @@ export function InventaireForm({ articles }: { articles: any[] }) {
     const id = e.target.value
     if (!id) {
       setMode('idle')
-      setSelectedArticleId('')
+      setSelectedProduitId('')
       return
     }
-    const article = articles.find(a => a.id === id)
-    if (article) {
-      setSelectedArticleId(article.id)
+    const produit = produits.find(a => a.id === id)
+    if (produit) {
+      setSelectedProduitId(produit.id)
       setMode('known')
-      setEditDesignation(article.designation)
-      setEditFournisseur(article.fournisseur || '')
-      setEditReference(article.reference || '')
+      setEditDesignation(produit.designation)
+      setEditFournisseur(produit.fournisseur || '')
+      setEditReference(produit.reference || '')
       setQuantiteReelle('')
       setObservation('')
       setSuccessMessage(null)
@@ -100,28 +100,28 @@ export function InventaireForm({ articles }: { articles: any[] }) {
   }
 
   const handleUpdateInfo = async () => {
-    if (!selectedArticleId) return
+    if (!selectedProduitId) return
     setIsSubmitting(true)
     const formData = new FormData()
-    formData.append("id", selectedArticleId)
+    formData.append("id", selectedProduitId)
     formData.append("designation", editDesignation)
     formData.append("fournisseur", editFournisseur)
     formData.append("reference", editReference)
     
     await updateInfosRapides(formData)
     
-    setSuccessMessage("Informations de l'article mises à jour.")
+    setSuccessMessage("Informations de l'produit mises à jour.")
     setIsEditingInfo(false)
     setIsSubmitting(false)
   }
 
   const handleSubmitCorrection = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedArticleId || ecart === null || ecart === 0) return
+    if (!selectedProduitId || ecart === null || ecart === 0) return
 
     setIsSubmitting(true)
     const formData = new FormData()
-    formData.append("articleId", selectedArticleId)
+    formData.append("produitId", selectedProduitId)
     formData.append("ecart", ecart.toString())
     if (observation) {
       formData.append("observation", observation)
@@ -131,7 +131,7 @@ export function InventaireForm({ articles }: { articles: any[] }) {
     
     setSuccessMessage(`Stock mis à jour avec succès. (Nouvelle quantité : ${quantiteReelle})`)
     setMode('idle')
-    setSelectedArticleId('')
+    setSelectedProduitId('')
     setQuantiteReelle('')
     setObservation('')
     setIsSubmitting(false)
@@ -151,9 +151,9 @@ export function InventaireForm({ articles }: { articles: any[] }) {
       formData.append("observation", observation)
     }
     
-    await creerArticleEtStock(formData)
+    await creerProduitEtStock(formData)
     
-    setSuccessMessage(`Nouvel article "${newDesignation}" créé avec ${quantiteReelle} en stock !`)
+    setSuccessMessage(`Nouvel produit "${newDesignation}" créé avec ${quantiteReelle} en stock !`)
     setMode('idle')
     setScannedCode(null)
     setQuantiteReelle('')
@@ -214,7 +214,7 @@ export function InventaireForm({ articles }: { articles: any[] }) {
                 
                 {showDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                    {articles
+                    {produits
                       .filter(a => 
                         !searchQuery || 
                         a.designation.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -226,7 +226,7 @@ export function InventaireForm({ articles }: { articles: any[] }) {
                           key={a.id}
                           type="button"
                           onClick={() => {
-                            setSelectedArticleId(a.id)
+                            setSelectedProduitId(a.id)
                             setMode('known')
                             setEditDesignation(a.designation)
                             setEditFournisseur(a.fournisseur || '')
@@ -244,9 +244,9 @@ export function InventaireForm({ articles }: { articles: any[] }) {
                           <div className="text-xs text-gray-500 dark:text-zinc-400">Réf: {a.reference || 'Aucune'}</div>
                         </button>
                       ))}
-                    {articles.filter(a => !searchQuery || a.designation.toLowerCase().includes(searchQuery.toLowerCase()) || (a.reference && a.reference.toLowerCase().includes(searchQuery.toLowerCase()))).length === 0 && (
+                    {produits.filter(a => !searchQuery || a.designation.toLowerCase().includes(searchQuery.toLowerCase()) || (a.reference && a.reference.toLowerCase().includes(searchQuery.toLowerCase()))).length === 0 && (
                       <div className="px-4 py-4 text-sm text-gray-500 dark:text-zinc-400 text-center">
-                        Aucun article trouvé.
+                        Aucun produit trouvé.
                       </div>
                     )}
                   </div>
@@ -263,11 +263,11 @@ export function InventaireForm({ articles }: { articles: any[] }) {
         )}
 
         {/* MODE CONNU : Mise à jour du stock et des infos */}
-        {mode === 'known' && selectedArticle && (
+        {mode === 'known' && selectedProduit && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
-                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">Article Connu</span>
+                <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">Produit Connu</span>
                 <button type="button" onClick={() => setMode('idle')} className="text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:text-zinc-300">
                   <X className="w-4 h-4" />
                 </button>
@@ -278,8 +278,8 @@ export function InventaireForm({ articles }: { articles: any[] }) {
             <div className="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden">
               <div className="px-4 py-3 border-b flex justify-between items-center bg-white dark:bg-zinc-900">
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-zinc-50">{selectedArticle.designation}</h3>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400">{selectedArticle.reference} • {selectedArticle.fournisseur || 'Fournisseur inconnu'}</p>
+                  <h3 className="font-bold text-gray-900 dark:text-zinc-50">{selectedProduit.designation}</h3>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">{selectedProduit.reference} • {selectedProduit.fournisseur || 'Fournisseur inconnu'}</p>
                 </div>
                 <button 
                   type="button" 
@@ -321,11 +321,11 @@ export function InventaireForm({ articles }: { articles: any[] }) {
               <div className="p-4 grid grid-cols-2 gap-4 text-center">
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Stock Théorique</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-zinc-50">{stockTheorique} <span className="text-sm font-normal text-gray-500 dark:text-zinc-400">{selectedArticle.unite}</span></p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-zinc-50">{stockTheorique} <span className="text-sm font-normal text-gray-500 dark:text-zinc-400">{selectedProduit.unite}</span></p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Code Barre</p>
-                  <p className="text-sm font-medium text-gray-700 dark:text-zinc-200 mt-1">{selectedArticle.codeBarre || 'Aucun'}</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-zinc-200 mt-1">{selectedProduit.codeBarre || 'Aucun'}</p>
                 </div>
               </div>
             </div>
@@ -406,7 +406,7 @@ export function InventaireForm({ articles }: { articles: any[] }) {
                   type="text" 
                   value={newDesignation}
                   onChange={(e) => setNewDesignation(e.target.value)}
-                  placeholder="Ex: Câble RO2V 3G1.5 Couronne 100m"
+                  placeholder="Ex: Sérum Acide Hyaluronique 50ml"
                   className="block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 px-3 py-2" 
                 />
               </div>
@@ -417,7 +417,7 @@ export function InventaireForm({ articles }: { articles: any[] }) {
                   type="text" 
                   value={newFournisseur}
                   onChange={(e) => setNewFournisseur(e.target.value)}
-                  placeholder="Ex: Rexel, Sonepar..."
+                  placeholder="Ex: PBI, BeautyTech..."
                   className="block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 px-3 py-2" 
                 />
               </div>
@@ -441,7 +441,7 @@ export function InventaireForm({ articles }: { articles: any[] }) {
                   type="text" 
                   value={observation}
                   onChange={(e) => setObservation(e.target.value)}
-                  placeholder="Ex: Palette au fond du hangar"
+                  placeholder="Ex: Étagère du bas, réserve arrière"
                   className="block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm px-3 py-2" 
                 />
               </div>

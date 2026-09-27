@@ -9,7 +9,7 @@ export default async function InventaireRapidePage() {
     redirect("/login")
   }
 
-  const articlesDb = await prisma.article.findMany({
+  const produitsDb = await prisma.produit.findMany({
     include: {
       mouvements: true
     },
@@ -19,7 +19,7 @@ export default async function InventaireRapidePage() {
   })
 
   // Calcul du stock
-  const articles = articlesDb.map(art => {
+  const produits = produitsDb.map(art => {
     let stock = 0
     art.mouvements.forEach(m => {
       if (['Achat', 'Retour', 'Correction_Plus'].includes(m.type)) stock += m.quantite
@@ -41,7 +41,7 @@ export default async function InventaireRapidePage() {
         <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-50 tracking-tight">Inventaire Rapide</h1>
         <p className="text-gray-500 dark:text-zinc-400 mt-2">Scannez ou cherchez un produit pour corriger son stock réel.</p>
       </div>
-      <InventaireClient articles={articles} />
+      <InventaireClient produits={produits} />
     </main>
   )
 }
