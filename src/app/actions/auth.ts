@@ -12,13 +12,13 @@ import { sendPasswordResetEmail } from "@/lib/mailer";
 // Création du compte gérant s'il n'existe pas (appelé à la volée lors du login par sécurité si db vide)
 async function initAdmin() {
   const admin = await (prisma as any).user.findUnique({
-    where: { username: "cedricelec" },
+    where: { username: "glowgrace" },
   });
   if (!admin) {
-    const hashedPassword = await bcrypt.hash("cogolin", 10);
+    const hashedPassword = await bcrypt.hash("admin", 10);
     await (prisma as any).user.create({
       data: {
-        username: "cedricelec",
+        username: "glowgrace",
         password: hashedPassword,
         role: "MEDECIN_CHEF",
       },
