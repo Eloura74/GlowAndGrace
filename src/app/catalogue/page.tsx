@@ -11,27 +11,32 @@ import { CatalogueFilters } from "./CatalogueFilters"
 
 export default async function CataloguePage({ searchParams }: { searchParams: Promise<{ q?: string, f?: string, c?: string, p?: string, alert?: string }> }) {
   const { q, f, c, p, alert } = await searchParams
-  let produits = await getProduits()
-  
-  if (alert === 'true') {
-    produits = produits.filter((a: any) => calculerStockProduit(a, a.mouvements).enAlerte)
-  }
+  let produits = []
+  let errorMsg = ""
+  try {
+    produits = await getProduits()
+    if (alert === 'true') {
+      produits = produits.filter((a: any) => calculerStockProduit(a, a.mouvements).enAlerte)
+    }
 
-  if (q) {
-    const query = q.toLowerCase()
-    produits = produits.filter((produit: any) => 
-      produit.designation.toLowerCase().includes(query) || 
-      produit.reference.toLowerCase().includes(query) ||
-      (produit.referenceFournisseur && produit.referenceFournisseur.toLowerCase().includes(query))
-    )
-  }
+    if (q) {
+      const query = q.toLowerCase()
+      produits = produits.filter((produit: any) => 
+        produit.designation.toLowerCase().includes(query) || 
+        produit.reference.toLowerCase().includes(query) ||
+        (produit.referenceFournisseur && produit.referenceFournisseur.toLowerCase().includes(query))
+      )
+    }
 
-  if (f) {
-    produits = produits.filter((a: any) => a.fournisseur === f)
-  }
+    if (f) {
+      produits = produits.filter((a: any) => a.fournisseur === f)
+    }
 
-  if (c) {
-    produits = produits.filter((a: any) => a.categorie === c)
+    if (c) {
+      produits = produits.filter((a: any) => a.categorie === c)
+    }
+  } catch (err: any) {
+    errorMsg = err.message || err.toString()
   }
 
   const fournisseurs = Array.from(new Set(produits.map((a: any) => a.fournisseur).filter(Boolean))) as string[]
@@ -43,6 +48,10 @@ export default async function CataloguePage({ searchParams }: { searchParams: Pr
   const pageSize = 50
   const totalPages = Math.ceil(produits.length / pageSize)
   const paginatedProduits = produits.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  if (errorMsg) {
+    return <div className="p-8 text-red-500 bg-red-50 rounded-lg">Erreur serveur: {errorMsg}</div>
+  }
 
   return (
     <div className="space-y-6">
