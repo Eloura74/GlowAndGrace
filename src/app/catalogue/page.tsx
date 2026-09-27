@@ -11,7 +11,7 @@ import { CatalogueFilters } from "./CatalogueFilters"
 
 export default async function CataloguePage({ searchParams }: { searchParams: Promise<{ q?: string, f?: string, c?: string, p?: string, alert?: string }> }) {
   const { q, f, c, p, alert } = await searchParams
-  let produits = []
+  let produits: any[] = []
   let errorMsg = ""
   try {
     produits = await getProduits()
