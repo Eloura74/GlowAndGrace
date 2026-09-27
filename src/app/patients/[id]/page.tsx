@@ -1,0 +1,262 @@
+import prisma from "@/lib/prisma"
+import { updatePatient, deletePatient, cloturerPatient } from "@/app/actions/patients"
+import { ArrowLeft, Edit, Save, Trash2, Package, CheckCircle2, TrendingDown } from "lucide-react"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { DeleteButton } from "@/components/DeleteButton"
+import { CloturerButton } from "@/components/CloturerButton"
+import { ExportBonLivraisonButton } from "@/components/ExportBonLivraisonButton"
+
+export default async function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  const patient = await prisma.patient.findUnique({
+    where: { id },
+    include: {
+      mouvements: {
+        include: { article: true },
+        orderBy: { date: 'desc' }
+      }
+    }
+  })
+
+  if (!patient) {
+    redirect("/patients")
+  }
+
+  // Calcul du matériel présent sur ce patient (par article)
+  const materielSurSiteMap = new Map<string, { article: any, quantite: number }>();
+  let valeurTotale = 0;
+
+  patient.mouvements.forEach((mvt: any) => {
+    if (!materielSurSiteMap.has(mvt.articleId)) {
+      materielSurSiteMap.set(mvt.articleId, { article: mvt.article, quantite: 0 });
+    }
+    const current = materielSurSiteMap.get(mvt.articleId)!;
+    
+    if (mvt.type === 'Depart') {
+      current.quantite += mvt.quantite;
+    } else if (mvt.type === 'Retour' || mvt.type === 'Consomme') {
+      current.quantite -= mvt.quantite;
+    }
+  });
+
+  const materielDeploye = Array.from(materielSurSiteMap.values()).filter(m => m.quantite > 0);
+  materielDeploye.forEach(m => {
+    valeurTotale += m.quantite * m.article.prixUnitaire;
+  });
+
+  let valeurConsommee = 0;
+  let valeurPerdue = 0;
+
+  patient.mouvements.forEach((mvt: any) => {
+    const cout = mvt.quantite * mvt.article.prixUnitaire;
+    if (mvt.type === 'Consomme') {
+      valeurConsommee += cout;
+    } else if (mvt.type === 'Perte') {
+      valeurPerdue += cout;
+    }
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/patients" className="text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:text-zinc-50">
+            <ArrowLeft className="h-6 w-6" />
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-50 flex items-center gap-2">
+            Détails du patient : {patient.nom}
+            {patient.statut === 'Terminé' && (
+              <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wider">Clôturé</span>
+            )}
+          </h1>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <ExportBonLivraisonButton patient={patient} materielDeploye={materielDeploye} />
+          {patient.statut === 'Actif' && (
+            <form action={cloturerPatient.bind(null, patient.id)}>
+              <CloturerButton />
+            </form>
+          )}
+          <form action={deletePatient.bind(null, patient.id)}>
+            <DeleteButton message="Supprimer définitivement ce patient et tout son historique ?" />
+          </form>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Édition */}
+        <div className="rounded-xl border bg-white dark:bg-zinc-900 p-6 shadow-sm lg:col-span-1">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Edit className="w-5 h-5 text-gray-500 dark:text-zinc-400"/> Modifier le patient</h2>
+          <form action={updatePatient} className="space-y-4">
+            <input type="hidden" name="id" value={patient.id} />
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200">Nom du patient</label>
+              <input name="nom" type="text" defaultValue={patient.nom} required className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-200">Statut</label>
+              <select name="statut" defaultValue={patient.statut} className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="Actif">Actif</option>
+                <option value="Terminé">Terminé</option>
+              </select>
+            </div>
+            
+            <button type="submit" className="w-full flex justify-center items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              <Save className="h-4 w-4" /> Enregistrer
+            </button>
+          </form>
+        </div>
+
+        {/* Historique & Stats */}
+        <div className="lg:col-span-2 space-y-6">
+          {patient.statut === 'Terminé' ? (
+            <div className="rounded-xl border bg-linear-to-br from-emerald-50 to-teal-50 border-emerald-100 p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-emerald-900 mb-6 flex items-center gap-2">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600"/> Bilan Financier du Patient
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white dark:bg-zinc-900/60 p-4 rounded-lg border border-emerald-100/50">
+                  <p className="text-sm font-medium text-emerald-800/70 mb-1">Matériel Consommé</p>
+                  <p className="text-2xl font-bold text-emerald-900">{valeurConsommee.toFixed(2)} €</p>
+                </div>
+                <div className="bg-white dark:bg-zinc-900/60 p-4 rounded-lg border border-emerald-100/50">
+                  <p className="text-sm font-medium text-emerald-800/70 mb-1">Matériel Perdu/Cassé</p>
+                  <p className="text-2xl font-bold text-red-600">{valeurPerdue.toFixed(2)} €</p>
+                </div>
+                <div className="bg-emerald-600 p-4 rounded-lg text-white shadow-md">
+                  <p className="text-sm font-medium text-emerald-100 mb-1">Coût Total Réel</p>
+                  <p className="text-3xl font-bold">{(valeurConsommee + valeurPerdue).toFixed(2)} €</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-xl border bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center gap-4">
+                <div className="bg-orange-100 p-3 rounded-lg text-orange-600"><Package className="w-6 h-6"/></div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-zinc-400">Matériel déployé (reste sur site)</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-zinc-50">{materielDeploye.reduce((acc, m) => acc + m.quantite, 0)} unités</p>
+                </div>
+              </div>
+              <div className="rounded-xl border bg-white dark:bg-zinc-900 p-4 shadow-sm">
+                <p className="text-sm font-medium text-gray-500 dark:text-zinc-400">Valeur totale sur site</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-zinc-50">
+                  {valeurTotale.toFixed(2)} €
+                </p>
+              </div>
+            </div>
+          )}
+
+          {patient.statut === 'Actif' && (
+            <div className="rounded-xl border bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+              <div className="border-b px-6 py-4 bg-gray-50 dark:bg-zinc-950">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-zinc-100">Matériel Actuellement sur ce Patient</h2>
+              </div>
+              <div className="p-6">
+                {materielDeploye.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 text-center">Aucun matériel actuellement sur ce patient.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {materielDeploye.map(m => (
+                      <div key={m.article.id} className="flex justify-between items-center border-b pb-2 last:border-0">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-zinc-50">{m.article.designation}</p>
+                          <p className="text-xs text-gray-500 dark:text-zinc-400">{m.article.reference}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-orange-600">{m.quantite} {m.article.unite}</p>
+                          <p className="text-xs text-gray-500 dark:text-zinc-400">Soit {(m.quantite * m.article.prixUnitaire).toFixed(2)} €</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-xl border bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+            <div className="border-b px-6 py-4 bg-gray-50 dark:bg-zinc-950">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-zinc-100">Historique des Mouvements</h2>
+            </div>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-white dark:bg-zinc-900">
+                  <tr>
+                    <th className="px-6 py-3 font-medium text-gray-500 dark:text-zinc-400">Date</th>
+                    <th className="px-6 py-3 font-medium text-gray-500 dark:text-zinc-400">Article</th>
+                    <th className="px-6 py-3 font-medium text-gray-500 dark:text-zinc-400">Par</th>
+                    <th className="px-6 py-3 font-medium text-gray-500 dark:text-zinc-400">Type</th>
+                    <th className="px-6 py-3 font-medium text-gray-500 dark:text-zinc-400">Qté</th>
+                    <th className="px-6 py-3 font-medium text-gray-500 dark:text-zinc-400">Obs.</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                  {patient.mouvements.length === 0 ? (
+                    <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-zinc-400">Aucun mouvement.</td></tr>
+                  ) : (
+                    patient.mouvements.map((mvt: any) => (
+                      <tr key={mvt.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 dark:bg-zinc-950">
+                        <td className="px-6 py-3 text-gray-600 dark:text-zinc-300">{new Date(mvt.date).toLocaleDateString('fr-FR')} à {new Date(mvt.date).getHours()}:{new Date(mvt.date).getMinutes().toString().padStart(2, '0')}</td>
+                        <td className="px-6 py-3 font-medium text-gray-900 dark:text-zinc-50">{mvt.article.designation}</td>
+                        <td className="px-6 py-3">
+                          {mvt.utilisateur ? <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded-md">{mvt.utilisateur}</span> : '-'}
+                        </td>
+                        <td className="px-6 py-3">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                            ${mvt.type === 'Depart' ? 'bg-blue-100 text-blue-800' : ''}
+                            ${mvt.type === 'Retour' ? 'bg-emerald-100 text-emerald-800' : ''}
+                            ${mvt.type === 'Consomme' ? 'bg-red-100 text-red-800' : ''}
+                          `}>
+                            {mvt.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 font-black text-gray-700 dark:text-zinc-200">
+                          {mvt.type === 'Depart' ? '+' : '-'}{mvt.quantite}
+                        </td>
+                        <td className="px-6 py-3 text-sm text-gray-500 dark:text-zinc-400 italic max-w-xs" title={mvt.observation || ""}>
+                          {mvt.observation || '-'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Vue Mobile (Historique Mouvements) */}
+            <div className="md:hidden divide-y divide-gray-100 border-t border-gray-100 dark:border-zinc-800">
+              {patient.mouvements.length === 0 ? (
+                <div className="p-6 text-center text-gray-500 dark:text-zinc-400">Aucun mouvement enregistré.</div>
+              ) : (
+                patient.mouvements.map((mvt: any) => (
+                  <div key={mvt.id} className="p-4 bg-white dark:bg-zinc-900 space-y-2">
+                    <div className="flex justify-between items-center text-xs text-gray-500 dark:text-zinc-400 mb-1">
+                      <span>{new Date(mvt.date).toLocaleDateString('fr-FR')} à {new Date(mvt.date).getHours()}:{new Date(mvt.date).getMinutes().toString().padStart(2, '0')}</span>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 font-bold text-[10px] uppercase
+                        ${mvt.type === 'Depart' ? 'bg-blue-100 text-blue-800' : ''}
+                        ${mvt.type === 'Retour' ? 'bg-emerald-100 text-emerald-800' : ''}
+                        ${mvt.type === 'Consomme' ? 'bg-red-100 text-red-800' : ''}
+                      `}>
+                        {mvt.type}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center bg-gray-50 dark:bg-zinc-950 p-3 rounded-lg">
+                      <div className="font-medium text-gray-900 dark:text-zinc-50">{mvt.article.designation}</div>
+                      <div className={`font-bold text-lg ${mvt.type === 'Depart' ? 'text-blue-600' : mvt.type === 'Retour' ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {mvt.type === 'Depart' ? '+' : '-'}{mvt.quantite}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

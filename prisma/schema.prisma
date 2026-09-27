@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Article {
+  id                   String  @id @default(cuid())
+  reference            String  @unique
+  designation          String
+  categorie            String?
+  unite                String? @default("u")
+  quantiteParBoite     Int     @default(1)
+  stockMinimum         Int     @default(0)
+  prixUnitaire         Float?  @default(0.0)
+  codeBarre            String? @unique
+  referenceFournisseur String?
+  fournisseur          String?
+  retourAttendu        Boolean @default(false)
+
+  stockInitial Int         @default(0)
+  mouvements   Mouvement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Patient {
+  id     String @id @default(cuid())
+  nom    String @unique
+  statut String @default("Actif")
+
+  mouvements         Mouvement[]
+  materiels          Materiel[]
+  mouvementsMateriel MouvementMateriel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Mouvement {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  type        String
+  quantite    Int
+  utilisateur String?
+  observation String?
+
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Materiel {
+  id        String    @id @default(cuid())
+  nom       String
+  marque    String?
+  reference String?   @unique
+  dateAchat DateTime?
+  valeur    Float?    @default(0.0)
+
+  statut      String   @default("Disponible")
+  patientId   String?
+  patient     Patient? @relation(fields: [patientId], references: [id])
+  utilisateur String?
+
+  mouvements MouvementMateriel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MouvementMateriel {
+  id          String   @id @default(cuid())
+  materielId  String
+  materiel    Materiel @relation(fields: [materielId], references: [id], onDelete: Cascade)
+  type        String
+  patientId   String?
+  patient     Patient? @relation(fields: [patientId], references: [id])
+  utilisateur String
+  date        DateTime @default(now())
+  observation String?
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  email     String?
+  role      String   @default("INFIRMIER")
+  createdAt DateTime @default(now())
+}

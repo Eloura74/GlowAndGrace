@@ -1,0 +1,55 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { getSession } from './lib/auth'
+
+// Specify which routes are protected
+const protectedRoutes = ['/', '/catalogue', '/patients', '/reassort', '/inventaire']
+const chefRoutes = ['/depart-matin']
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  // Skip API, static files, images...
+  if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {
+    return NextResponse.next()
+  }
+
+  const session = await getSession()
+
+  // 1. Unauthenticated users -> Redirect to login (sauf pages publiques)
+  const publicPaths = ['/login', '/mot-de-passe-oublie', '/reset-password']
+  const isPublicPath = publicPaths.some(p => pathname === p || pathname.startsWith(`${p}/`))
+  
+  if (!session && !isPublicPath) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // 2. Authenticated users going to public pages -> Redirect to their respective dashboard
+  if (session && isPublicPath) {
+    if (session.role === 'MEDECIN_CHEF') {
+      return NextResponse.redirect(new URL('/', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/depart-matin', request.url))
+    }
+  }
+
+  // 3. Chefs d'équipe trying to access Gerant routes -> Redirect to depart-matin
+  if (session && session.role === 'INFIRMIER' && protectedRoutes.some(r => pathname === r || pathname.startsWith(`${r}/`))) {
+    return NextResponse.redirect(new URL('/depart-matin', request.url))
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+  ],
+}

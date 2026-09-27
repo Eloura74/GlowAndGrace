@@ -1,0 +1,44 @@
+{
+  "name": "app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "node -e \"if (process.env.DATABASE_URL && (process.env.DATABASE_URL.startsWith('postgres') || process.env.DATABASE_URL.startsWith('postgresql'))) { require('child_process').execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' }); }\" && next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "html5-qrcode": "^2.3.8",
+    "jose": "^6.2.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "lucide-react": "^1.21.0",
+    "next": "16.2.9",
+    "next-themes": "^0.4.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.6.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/mailparser": "^3.4.6",
+    "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
