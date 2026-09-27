@@ -24,11 +24,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh bg-gray-50 dark:bg-zinc-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="mx-auto h-16 w-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
-          <span className="text-white text-3xl font-black transform -rotate-3">QE</span>
+        <div className="mx-auto h-16 w-16 bg-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
+          <span className="text-white text-3xl font-black transform -rotate-3">G&G</span>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-zinc-50">
-          Quentin Elec
+          Glow & Grace
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600 dark:text-zinc-300">
           Identifiez-vous pour accéder à la plateforme.
@@ -54,7 +54,8 @@ export default function LoginPage() {
                   name="username"
                   type="text"
                   placeholder="ex: julie ou marie"
-                  className="block w-full pl-10 rounded-lg border-gray-300 dark:border-zinc-700 px-4 py-3 bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-50 focus:bg-white dark:bg-zinc-900 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                  autoComplete="username"
+                  className="block w-full pl-10 rounded-lg border-gray-300 dark:border-zinc-700 px-4 py-3 bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-50 focus:bg-white dark:bg-zinc-900 focus:border-fuchsia-500 focus:ring-fuchsia-500 transition-colors"
                 />
               </div>
             </div>
@@ -70,7 +71,8 @@ export default function LoginPage() {
                   name="password"
                   type="password"
                   placeholder="••••••••"
-                  className="block w-full pl-10 rounded-lg border-gray-300 dark:border-zinc-700 px-4 py-3 bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-50 focus:bg-white dark:bg-zinc-900 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                  autoComplete="current-password"
+                  className="block w-full pl-10 rounded-lg border-gray-300 dark:border-zinc-700 px-4 py-3 bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-50 focus:bg-white dark:bg-zinc-900 focus:border-fuchsia-500 focus:ring-fuchsia-500 transition-colors"
                 />
               </div>
             </div>
@@ -78,7 +80,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-500 disabled:opacity-50 transition-all"
             >
               {isPending ? 'Connexion en cours...' : 'Se Connecter'}
             </button>
@@ -86,7 +88,7 @@ export default function LoginPage() {
             <div className="text-center">
               <Link 
                 href="/mot-de-passe-oublie"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="text-sm text-fuchsia-600 hover:text-fuchsia-700 font-medium transition-colors"
               >
                 Mot de passe oublié ?
               </Link>
